@@ -226,7 +226,7 @@ class BaseFileParser:
 
     def all(self):
         """Return a queryset with all lines."""
-        return self.QuerySet(self.lines).filter(*args, **kwargs)
+        return self.QuerySet(self.lines)
 
     def __getitem__(self, key):
         """Allow to get queryset slices."""
@@ -238,20 +238,20 @@ class BaseFileParser:
 class PROHLineParser(BaseLineParser):
     """Line Parser com mapa para o arquivo PROH."""
 
-    map = {"event_type": slice(52, 54),
-           "asset": slice(2, 14),
-           "distribution_number": slice(14, 17),
-           "value": slice(77, 95),
-           "destination_asset": slice(113, 125),
-           "new_distribution_number": slice(125, 128),
-           "cod_isin_dir": slice(143, 155),
-           "prec_pap_subs": slice(158, 176),
-           "data_lim_subs": slice(176, 184),
-           "payment_date": slice(184, 192),
-           "execution_date": slice(333, 341),
-           "sequence_number": slice(341, 348),
-           "cod_neg": slice(17, 29),
-           "cod_isin_ori": slice(128, 140)}
+    map = OrderedDict([("event_type", slice(52, 54)),
+                       ("asset", slice(2, 14)),
+                       ("distribution_number", slice(14, 17)),
+                       ("value", slice(77, 95)),
+                       ("destination_asset", slice(113, 125)),
+                       ("new_distribution_number", slice(125, 128)),
+                       ("cod_isin_dir", slice(143, 155)),
+                       ("prec_pap_subs", slice(158, 176)),
+                       ("data_lim_subs", slice(176, 184)),
+                       ("payment_date", slice(184, 192)),
+                       ("execution_date", slice(333, 341)),
+                       ("sequence_number", slice(341, 348)),
+                       ("cod_neg", slice(17, 29)),
+                       ("cod_isin_ori", slice(128, 140))])
 
 
 class PROHFileParser(BaseFileParser):
