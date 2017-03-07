@@ -7,6 +7,12 @@ from collections import OrderedDict
 from terminaltables import AsciiTable
 
 
+class InvalidLineError(Exception):
+    """Some problem with this line. Line skipped."""
+
+    pass
+
+
 class ValuesList(list):
     """Extended list with better shell representation."""
 
@@ -29,32 +35,38 @@ class ValuesList(list):
 class BaseLineParser:
     """Parser for each single line of file."""
 
-    map = OrderedDict()
+    _map = OrderedDict()
 
     def __init__(self, line, line_number=None):
         """Parse and objectify this line."""
         self._original_line = line
         self._line_number = str(line_number) if line_number else None
-        self.before_parse()
-        for k, v in self.map.items():
+        self._before_parse()
+        for k, v in self._map.items():
             self.__setattr__(k, self._original_line[v].rstrip())
-        self.after_parse()
+        self._after_parse()
 
-    def before_parse(self):
-        """Method called before any parse is done."""
+    def _before_parse(self):
+        """Method called before any parse is done.
+
+        raise InvalidLineError if you want to skip this line.
+        """
         pass
 
-    def after_parse(self):
-        """Method called after parsing is done."""
+    def _after_parse(self):
+        """Method called after parsing is done.
+
+        raise InvalidLineError if you want to skip this line.
+        """
         pass
 
     def __repr__(self):
         """Shell line representation."""
-        return repr(ValuesList([self.values()], headers=self.map.keys()))
+        return repr(ValuesList([self._values()], headers=self._map.keys()))
 
-    def values(self, *args):
+    def _values(self, *args):
         """Return a value or list of values of this line."""
-        args = args or self.map.keys()
+        args = args or self._map.keys()
         return tuple([self.__getattribute__(arg) for arg in args])
 
 
@@ -77,11 +89,11 @@ class BaseFileParser:
             """Return a list or list of lists that contains that values."""
             # if not args and self.lines:
             #     args = self.lines[0].map.keys()
-            args = args or self._parent_.line_parser.map.keys()
+            args = args or self._parent_._line_parser._map.keys()
             if len(args) == 1:
                 data = [l.__getattribute__(args[0]) for l in self.lines]
             else:
-                data = [l.values(*args) for l in self.lines]
+                data = [l._values(*args) for l in self.lines]
             return ValuesList(data, headers=args)
 
         @staticmethod
@@ -165,7 +177,7 @@ class BaseFileParser:
                 And from those get the ones who lives in Texas or New York
                     womens = womens.filter(state__in=["TX", "NY"])
 
-                And let's say that you use the before_parse() method to
+                And let's say that you use the _before_parse() method to
                 turn the 'birthday' field into a datetime object. Now you
                 may filter for womens that was born on july 4th
                     womens = womens.filter(birthday__month=7, birthday__day=4)
@@ -214,7 +226,7 @@ class BaseFileParser:
 
         def __getitem__(self, *args, **kwargs):
             """Allow to get queryset slices."""
-            return self.lines.__getitem__(*args, **kwargs)
+            return self.new(self.lines.__getitem__(*args, **kwargs))
 
         def __len__(self, *args, **kwargs):
             """Size of queryset."""
@@ -224,27 +236,30 @@ class BaseFileParser:
             """Screen representation."""
             return repr(self.values())
 
-    line_parser = BaseLineParser
+    _line_parser = BaseLineParser
 
     def __init__(self, file_discriptor, line_parser=None):
         """Create instance using a file discriptor as input.
 
         May use a custom line parser object
         """
-        self.line_parser = line_parser or self.line_parser
+        self._line_parser = line_parser or self._line_parser
         line_number = 0
         lines = []
         for l in file_discriptor.readlines():
             line_number += 1
             if l:
-                lines.append(self.line_parser(l, line_number))
+                try:
+                    lines.append(self._line_parser(l, line_number))
+                except InvalidLineError:
+                    pass
         self.lines = self.QuerySet(lines, self)
 
     @classmethod
     def open(cls, filename, line_parser=None):
         """Open this file and parse it."""
         f = open(filename, "r")
-        parsed = cls(f, line_parser=None)
+        parsed = cls(f, line_parser)
         f.close()
         return parsed
 
@@ -256,20 +271,20 @@ class BaseFileParser:
 class PROHLineParser(BaseLineParser):
     """Line Parser com mapa para o arquivo PROH."""
 
-    map = OrderedDict([("event_type", slice(52, 54)),
-                       ("asset", slice(2, 14)),
-                       ("distribution_number", slice(14, 17)),
-                       ("value", slice(77, 95)),
-                       ("destination_asset", slice(113, 125)),
-                       ("new_distribution_number", slice(125, 128)),
-                       ("cod_isin_dir", slice(143, 155)),
-                       ("prec_pap_subs", slice(158, 176)),
-                       ("data_lim_subs", slice(176, 184)),
-                       ("payment_date", slice(184, 192)),
-                       ("execution_date", slice(333, 341)),
-                       ("sequence_number", slice(341, 348)),
-                       ("cod_neg", slice(17, 29)),
-                       ("cod_isin_ori", slice(128, 140))])
+    _map = OrderedDict([("event_type", slice(52, 54)),
+                        ("asset", slice(2, 14)),
+                        ("distribution_number", slice(14, 17)),
+                        ("value", slice(77, 95)),
+                        ("destination_asset", slice(113, 125)),
+                        ("new_distribution_number", slice(125, 128)),
+                        ("cod_isin_dir", slice(143, 155)),
+                        ("prec_pap_subs", slice(158, 176)),
+                        ("data_lim_subs", slice(176, 184)),
+                        ("payment_date", slice(184, 192)),
+                        ("execution_date", slice(333, 341)),
+                        ("sequence_number", slice(341, 348)),
+                        ("cod_neg", slice(17, 29)),
+                        ("cod_isin_ori", slice(128, 140))])
 
 
 class PROHFileParser(BaseFileParser):
