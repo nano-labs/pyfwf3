@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Parsers for fixed width fields file format."""
 
-from decimal import Decimal
+from operator import eq as equals
 from collections import OrderedDict
 from terminaltables import AsciiTable
 
@@ -84,11 +84,63 @@ class BaseFileParser:
                 data = [l.values(*args) for l in self.lines]
             return ValuesList(data, headers=args)
 
+        @staticmethod
+        def _filter_validations(keywords):
+            """Create a validation list using filter keywords.
+
+            Return [
+                (<line field name>, <function pointer>, <function args tuple>),
+                ...
+            ]
+            """
+            def attr_comparisons(obj, attr, value):
+                """Lookup for object's method or attribute and compare.
+
+                obj: field value from a line
+                attr: attribute of that object to compare
+                value: value to compare with object's attribute
+                """
+                if attr == "in":
+                    return obj in value
+
+                # translate 'somemethod' to '__somemethod__' if exists
+                if (not hasattr(obj, attr) and
+                        hasattr(obj, "__{}__".format(attr))):
+                    attr = "__{}__".format(attr)
+                # else: let it raise exception
+
+                obj_attr = obj.__getattribute__(attr)
+                if callable(obj_attr):
+                    try:
+                        # for cases that expect arguments
+                        # Ex: .__gt__() or .startswith()
+                        return bool(obj_attr(value))
+                    except TypeError:
+                        # for cases that DONT expect arguments
+                        # Ex: .__len__() or .isalpha()
+                        return obj_attr() == value
+                # for cases that the attribute is not callable
+                # Ex: .real (on int and float) or .day (on datetime)
+                return obj_attr == value
+
+            validators = []
+            for field, value in keywords.items():
+                if "__" not in field:
+                    validators.append((field, equals, (value,)))
+
+                else:
+                    real_field, field_attr = field.split("__")
+                    field_attr = {"lte": "le",
+                                  "gte": "ge"}.get(field_attr, field_attr)
+                    validators.append((real_field, attr_comparisons,
+                                       (field_attr, value)))
+            return validators
+
         def filter(self, **kwargs):
             """Filter lines based on fields.
 
             Special filter may be used with __ notation.
-                Available special filters:
+                Some special filters are but not limited to:
                 __lt: less than
                 __lte: less than or equals
                 __le: less than or equals
@@ -100,8 +152,11 @@ class BaseFileParser:
                 __startswith: value starts with that string
                 __endswith: value ends with that string
                 __in: value is in a list
-                or any of "issomething" methods of string objects such as
-                    __isdigit, __issupper, __isalnum
+
+            It will actually look for any attribute or method of the field
+            object that matches with 'object.somefilter' or
+            'object.__somefilter__' and call it or compare with it
+
             Ex:
                 Get people that name is not empty and are 18 years old or older
                     people = persons.filter(name__ne="", age__gte=18)
@@ -109,18 +164,39 @@ class BaseFileParser:
                     womens = people.filter(sex="F")
                 And from those get the ones who lives in Texas or New York
                     womens = womens.filter(state__in=["TX", "NY"])
+
+                And let's say that you use the before_parse() method to
+                turn the 'birthday' field into a datetime object. Now you
+                may filter for womens that was born on july 4th
+                    womens = womens.filter(birthday__month=7, birthday__day=4)
             """
-            matches = self._filter_validations(kwargs)
-            return self.new([l for l in self.lines
-                             if all([v(l.__getattribute__(k))
-                                     for k, v in matches])])
+            validators = self._filter_validations(kwargs)
+            return self.new(
+                [
+                    l for l in self.lines
+                    if all(
+                        [
+                            function(l.__getattribute__(field), *args)
+                            for field, function, args in validators
+                        ]
+                    )
+                ]
+            )
 
         def exclude(self, **kwargs):
             """Filter lines that DO NOT match the kwargs."""
-            matches = self._filter_validations(kwargs)
-            return self.new([l for l in self.lines
-                             if not any([v(l.__getattribute__(k))
-                                         for k, v in matches])])
+            validators = self._filter_validations(kwargs)
+            return self.new(
+                [
+                    l for l in self.lines
+                    if not any(
+                        [
+                            function(l.__getattribute__(field), *args)
+                            for field, function, args in validators
+                        ]
+                    )
+                ]
+            )
 
         def order_by(self, field, reverse=False):
             """Order lines by fields."""
@@ -148,42 +224,6 @@ class BaseFileParser:
             """Screen representation."""
             return repr(self.values())
 
-        @staticmethod
-        def _filter_validations(keywords):
-            """Create a validation dict using filter keywords.
-
-            Transform every key&value pair into a key&validation-lambda
-            """
-            matches = []
-            for k, v in keywords.items():
-                if "__" not in k:
-                    matches.append((k, lambda x, v=v: x == v))
-                    continue
-                # else:
-                field, method = k.split("__")
-                keywords[field] = v
-                keywords.pop(k)
-                method = {"lte": "le", "gte": "ge"}.get(method, method)
-                if method in ("len", "ne"):
-                    method = "__{}__".format(method)
-                    func = lambda x, v=v, m=method: x.__getattribute__(m)(v)
-
-                elif method == "in":
-                    func = lambda x, v=v: x in v
-
-                elif method in ("gt", "lt", "le", "ge"):
-                    method = "__{}__".format(method)
-                    func = lambda x, v=v, m=method: Decimal(x).__getattribute__(m)(Decimal(v)) if x else False
-
-                elif method.startswith("is") and isinstance(v, bool):
-                    func = lambda x, v=v, m=method: x.__getattribute__(m)() == v
-
-                else:
-                    func = lambda x, v=v, m=method: x.__getattribute__(m)(v)
-
-                matches.append((field, func))
-            return matches
-
     line_parser = BaseLineParser
 
     def __init__(self, file_discriptor, line_parser=None):
@@ -198,7 +238,7 @@ class BaseFileParser:
             line_number += 1
             if l:
                 lines.append(self.line_parser(l, line_number))
-        self.lines = lines
+        self.lines = self.QuerySet(lines, self)
 
     @classmethod
     def open(cls, filename, line_parser=None):
@@ -208,31 +248,9 @@ class BaseFileParser:
         f.close()
         return parsed
 
-    def filter(self, *args, **kwargs):
-        """Return a filtered queryset."""
-        return self.QuerySet(self.lines, self).filter(*args, **kwargs)
-
-    def exclude(self, *args, **kwargs):
-        """Return a filtered queryset."""
-        return self.QuerySet(self.lines).exclude(*args, **kwargs)
-
-    def values(self, *args):
-        """Return a list or list of lists that contains that values."""
-        return self.QuerySet(self.lines).values(*args)
-
-    def count(self):
-        """Return given file line count."""
-        return self.QuerySet(self.lines).count()
-
     def all(self):
         """Return a queryset with all lines."""
-        return self.QuerySet(self.lines)
-
-    def __getitem__(self, key):
-        """Allow to get queryset slices."""
-        if isinstance(key, slice):
-            return self.QuerySet(self.lines.__getitem__(key))
-        return self.lines.__getitem__(key)
+        return self.lines
 
 
 class PROHLineParser(BaseLineParser):
