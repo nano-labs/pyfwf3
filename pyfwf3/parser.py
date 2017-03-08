@@ -72,6 +72,11 @@ class BaseLineParser:
         """Shell line representation."""
         return repr(ValuesList([self._values()], headers=self._headers))
 
+    def __iter__(self):
+        """Line as a iterable. Allows to convert to list or tuples."""
+        for v in self._values():
+            yield v
+
     def _values(self, *args):
         """Return a value or list of values of this line."""
         args = args or self._headers
