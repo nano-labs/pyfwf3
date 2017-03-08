@@ -40,11 +40,18 @@ class BaseLineParser:
     def __init__(self, line, line_number=None):
         """Parse and objectify this line."""
         self._original_line = line
-        self._line_number = str(line_number) if line_number else None
+        self._line_number = line_number
+        self._headers = list(self._map.keys())
         self._before_parse()
         for k, v in self._map.items():
             self.__setattr__(k, self._original_line[v].rstrip())
         self._after_parse()
+
+    def _update_headers(self):
+        """Add any new attribute to headers."""
+        for attr in dir(self):
+            if not attr.startswith("_") and attr not in self._headers:
+                self._headers.append(attr)
 
     def _before_parse(self):
         """Method called before any parse is done.
@@ -56,17 +63,18 @@ class BaseLineParser:
     def _after_parse(self):
         """Method called after parsing is done.
 
-        raise InvalidLineError if you want to skip this line.
+        Raise InvalidLineError if you want to skip this line.
+        Call self._update_headers() if you added some new attribute
         """
         pass
 
     def __repr__(self):
         """Shell line representation."""
-        return repr(ValuesList([self._values()], headers=self._map.keys()))
+        return repr(ValuesList([self._values()], headers=self._headers))
 
     def _values(self, *args):
         """Return a value or list of values of this line."""
-        args = args or self._map.keys()
+        args = args or self._headers
         return tuple([self.__getattribute__(arg) for arg in args])
 
 
@@ -89,15 +97,16 @@ class BaseFileParser:
             """Return a list or list of lists that contains that values."""
             # if not args and self.lines:
             #     args = self.lines[0].map.keys()
-            args = args or self._parent_._line_parser._map.keys()
+            # args = args or self._parent_._line_parser._get_headers()
             if len(args) == 1:
                 data = [l.__getattribute__(args[0]) for l in self.lines]
             else:
                 data = [l._values(*args) for l in self.lines]
-            return ValuesList(data, headers=args)
+            headers = self.lines[0]._headers if data and not args else args
+            return ValuesList(data, headers=headers)
 
         @staticmethod
-        def _filter_validations(keywords):
+        def _filter_validators(keywords):
             """Create a validation list using filter keywords.
 
             Return [
@@ -182,7 +191,7 @@ class BaseFileParser:
                 may filter for womens that was born on july 4th
                     womens = womens.filter(birthday__month=7, birthday__day=4)
             """
-            validators = self._filter_validations(kwargs)
+            validators = self._filter_validators(kwargs)
             return self.new(
                 [
                     l for l in self.lines
@@ -197,7 +206,7 @@ class BaseFileParser:
 
         def exclude(self, **kwargs):
             """Filter lines that DO NOT match the kwargs."""
-            validators = self._filter_validations(kwargs)
+            validators = self._filter_validators(kwargs)
             return self.new(
                 [
                     l for l in self.lines
@@ -224,9 +233,12 @@ class BaseFileParser:
             """List of unique values for that fields."""
             return list(set(self.values(*args)))
 
-        def __getitem__(self, *args, **kwargs):
+        def __getitem__(self, index):
             """Allow to get queryset slices."""
-            return self.new(self.lines.__getitem__(*args, **kwargs))
+            if isinstance(index, slice):
+                return self.new(self.lines.__getitem__(index))
+            else:
+                return self.lines.__getitem__(index)
 
         def __len__(self, *args, **kwargs):
             """Size of queryset."""

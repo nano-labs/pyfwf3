@@ -37,6 +37,7 @@ class EnhancedHumanLineParser(HumanLineParser):
 
         # set a new attribute 'age'
         self.age = datetime.today().year - self.birthday.year
+        self._headers.append("age")
 
         # skip those who does not have a profession
         if not self.profession:
