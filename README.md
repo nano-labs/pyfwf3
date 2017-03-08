@@ -47,7 +47,7 @@ So that file will easily become this:
 - Parse and objectify your file
 - Filter objects using a django-like syntax
 - Reorganize your data
-- Vizualization as table
+- Vizualization as table (thanks to [terminaltables](https://robpol86.github.io/terminaltables/))
 - Order by column
 - Add or remove columns
 - Count a subset
@@ -138,11 +138,11 @@ We will discuss those classes in the [future](#BaseLineParser)
 
 ## Queryset
 
-With your parsed file as a BaseFileParser instance you have each line stored as a Queryset instance on the ".lines" attribute. So:
+With your parsed file as a BaseFileParser instance you have all lines stored as a Queryset instance in ".lines" attribute. So:
 
 ```pycon
 >>> parsed = HumanFileParser.open("examples/humans.txt")
->>> # slices returns a smaller querysey instance
+# slices returns a smaller querysey instance
 >>> parsed.lines[0:5]
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -153,14 +153,14 @@ With your parsed file as a BaseFileParser instance you have each line stored as 
 | Georgia Frank    | 20110508 | F      |
 | Virginia Lambert | 19930404 | M      |
 +------------------+----------+--------+
->>> # while getting a specific item returns a parsed line instance
+# while getting a specific item returns a parsed line instance
 >>> parsed.lines[327]
 +------------+----------+--------+
 | name       | birthday | gender |
 +------------+----------+--------+
 | Jack Brown | 19490106 | M      |
 +------------+----------+--------+
->>> # Note that the table is only a shell representation of the parsed line objects
+# Note that the table is only a shell representation of the objects
 >>> parsed.lines[327].name
 'Jack Brown'
 >>> parsed.lines[327].birthday
@@ -171,15 +171,16 @@ With your parsed file as a BaseFileParser instance you have each line stored as 
 ('M', 'Jack Brown', '19490106')
 >>> list(parsed.lines[327])
 ['M', 'Jack Brown', '19490106']
->>> # To prevent the fields from changing order use OrderedDict instead of dict on _map
+# To prevent the fields from changing order use OrderedDict instead of dict on _map. More about that later
 ```
 
-### .filter()
+### .filter(**kwargs)
 
 Here is where the magic happens. A filtered queryset will always return a new queryset that can be filtered and so and so
 ```pycon
 >>> parsed = HumanFileParser.open("examples/humans.txt")
 >>> first5 = parsed.lines[:5]
+# 'first5' is a Queryset instance just as 'parsed.lines' but with only a few lines
 >>> firts5
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -190,6 +191,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Georgia Frank    | 20110508 | F      |
 | Virginia Lambert | 19930404 | M      |
 +------------------+----------+--------+
+# And it cant be filtered
 >>> first5.filter(gender="F")
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -197,6 +199,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Dianne Mcintosh  | 19570526 | F      |
 | Georgia Frank    | 20110508 | F      |
 +------------------+----------+--------+
+# with multiple keywords arguments
 >>> firts5.filter(gender="M", birthday__gte="19900101")
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -204,6 +207,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Rosalyn Clark    | 19940213 | M      |
 | Virginia Lambert | 19930404 | M      |
 +------------------+----------+--------+
+# or chained
 >>> firts5.filter(name__endswith="k").filter(gender=F)
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -211,3 +215,15 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Georgia Frank    | 20110508 | F      |
 +------------------+----------+--------+
 ```
+Some special filters may be used with __ notation. Here some but not limited to:
+- __in: value is in a list
+- __lt: less than
+- __lte: less than or equals
+- __gt: greater than
+- __gte: greater than or equals
+- __ne: not equals
+- __len: field lenght (without trailing spaces)
+- __startswith: value starts with that string
+- __endswith: value ends with that string
+
+It will actually look for any attribute or method of the field object that matches with 'object.somefilter' or 'object.__somefilter__' and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse()) method to convert the birthday field into datetime.date instances you can now filter using, for example, birthday__year=1957
