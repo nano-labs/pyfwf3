@@ -226,4 +226,4 @@ Some special filters may be used with __ notation. Here some but not limited to:
 - __startswith: value starts with that string
 - __endswith: value ends with that string
 
-It will actually look for any attribute or method of the field object that matches with 'object.somefilter' or 'object.\__somefilter\__' and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse()) method to convert the birthday field into datetime.date instances you can now filter using, for example, birthday__year=1957
+It will actually look for any attribute or method of the field object that matches with __'object.somefilter'__ or __'object.\_\_somefilter\_\_'__ and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse()) method to convert the __'birthday'__ field into __datetime.date__ instances you can now filter using, for example, __.filter(birthday\_\_year=1957)__
