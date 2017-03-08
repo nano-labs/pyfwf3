@@ -3,8 +3,8 @@
 """Parser humans."""
 
 from datetime import datetime
-from pyfwf3.parser import (BaseLineParser, BaseFileParser, OrderedDict,
-                           InvalidLineError)
+from pyfwf3 import (BaseLineParser, BaseFileParser, OrderedDict,
+                    InvalidLineError)
 
 
 class HumanLineParser(BaseLineParser):
@@ -13,7 +13,7 @@ class HumanLineParser(BaseLineParser):
     _map = OrderedDict(
         [
             ("name", slice(32, 56)),
-            ("sex", slice(19, 20)),
+            ("gender", slice(19, 20)),
             ("birthday", slice(11, 19)),
             ("location", slice(0, 9)),
             ("state", slice(9, 11)),
