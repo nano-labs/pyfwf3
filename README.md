@@ -63,9 +63,9 @@ So that file will easily become this:
 - Write a fixed-width field file (?)(why would someone write those files?)
 
 
-## Usage
+# Usage
 
-### Setting you parser
+## Setting you parser
 First thing you need to know is the width of each column on your file. There's no magic here. You will need to find out.
 
 Lets take [this file](https://github.com/nano-labs/pyfwf3/blob/master/examples/humans.txt) as example. Here its first line:
@@ -79,53 +79,135 @@ By testing, splitting, trying or whatever I know that:
 - Next 1 is her gender
 - Next 12 I dont have a clue and I dont care
 - Next 24 are her name
-and so on. But I only what name, birthday and gender so let's write it's model
+
+and so on. But I only want name, birthday and gender so let's write it's model
 
 ```python
 from pyfwf3 import BaseLineParser
 
 class Human(BaseLineParser):
+    """Parser for each line of that humans.txt file."""
 
     _map = {"name": slice(32, 56),
             "gender": slice(19, 20),
             "birthday": slice(11, 19)}
 ```
 
-The slices represents the start and finnish positions of each information in the line.
-Thats the most basic line parser you need. Now we are going to use it with the file parser.
+The slices represents the first and last positions of each information in the line and that's the most basic line parser you need. Now we are going to use it with the file parser.
 
 ```python
 from pytwt3 import BaseFileParser
 
-parsed = BaseFileParser.open("example/humnas.txt", line_parser=Human)
+parsed = BaseFileParser.open("examples/humnas.txt", line_parser=Human)
 ```
 
-That's it. Your file is parsed and now usable. Let's put it together:
+That's it. Your file is parsed and now usable but let's put it together:
 
 ```python
 from pyfwf3 import BaseLineParser, BaseFileParser
 
 class Human(BaseLineParser):
+    """Parser for each line of that humans.txt file."""
 
     _map = {"name": slice(32, 56),
             "gender": slice(19, 20),
             "birthday": slice(11, 19)}
 
-parsed = BaseFileParser.open("example/humnas.txt", line_parser=Human)
+parsed = BaseFileParser.open("examples/humnas.txt", line_parser=Human)
 ```
 or even
 ```python
 from pyfwf3 import BaseLineParser, BaseFileParser
 
 class Human(BaseLineParser):
+    """Parser for each line of that humans.txt file."""
 
     _map = {"name": slice(32, 56),
             "gender": slice(19, 20),
             "birthday": slice(11, 19)}
 
 class HumanFileParser(BaseFileParser):
+    """Parser for that humans.txt file."""
 
     _line_parser = Human
 
-parsed = HumanFileParser.open("example/humnas.txt")
+parsed = HumanFileParser.open("examples/humans.txt")
+```
+We will discuss those classes in the [future](#BaseLineParser)
+
+
+## Queryset
+
+With your parsed file as a BaseFileParser instance you have each line stored as a Queryset instance on the ".lines" attribute. So:
+
+```pycon
+>>> parsed = HumanFileParser.open("examples/humans.txt")
+>>> # slices returns a smaller querysey instance
+>>> parsed.lines[0:5]
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Dianne Mcintosh  | 19570526 | F      |
+| Rosalyn Clark    | 19940213 | M      |
+| Shirley Gray     | 19510403 | M      |
+| Georgia Frank    | 20110508 | F      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+>>> # while getting a specific item returns a parsed line instance
+>>> parsed.lines[327]
++------------+----------+--------+
+| name       | birthday | gender |
++------------+----------+--------+
+| Jack Brown | 19490106 | M      |
++------------+----------+--------+
+>>> # Note that the table is only a shell representation of the parsed line objects
+>>> parsed.lines[327].name
+'Jack Brown'
+>>> parsed.lines[327].birthday
+'19490106'
+>>> parsed.lines[327].gender
+'M'
+>>> tuple(parsed.lines[327])
+('M', 'Jack Brown', '19490106')
+>>> list(parsed.lines[327])
+['M', 'Jack Brown', '19490106']
+>>> # To prevent the fields from changing order use OrderedDict instead of dict on _map
+```
+
+### .filter()
+
+Here is where the magic happens. A filtered queryset will always return a new queryset that can be filtered and so and so
+```pycon
+>>> parsed = HumanFileParser.open("examples/humans.txt")
+>>> first5 = parsed.lines[:5]
+>>> firts5
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Dianne Mcintosh  | 19570526 | F      |
+| Rosalyn Clark    | 19940213 | M      |
+| Shirley Gray     | 19510403 | M      |
+| Georgia Frank    | 20110508 | F      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+>>> first5.filter(gender="F")
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Dianne Mcintosh  | 19570526 | F      |
+| Georgia Frank    | 20110508 | F      |
++------------------+----------+--------+
+>>> firts5.filter(gender="M", birthday__gte="19900101")
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Rosalyn Clark    | 19940213 | M      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+>>> firts5.filter(name__endswith="k").filter(gender=F)
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Georgia Frank    | 20110508 | F      |
++------------------+----------+--------+
 ```
