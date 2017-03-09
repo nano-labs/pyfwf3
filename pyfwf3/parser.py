@@ -39,12 +39,14 @@ class BaseLineParser:
 
     def __init__(self, line, line_number=None):
         """Parse and objectify this line."""
-        self._original_line = line
+        self._parsable_line = None
+        self._unparsed_line = line
         self._line_number = line_number
         self._headers = list(self._map.keys())
         self._before_parse()
+        line = self._parsable_line or self._unparsed_line
         for k, v in self._map.items():
-            self.__setattr__(k, self._original_line[v].rstrip())
+            self.__setattr__(k, line[v].rstrip())
         self._after_parse()
 
     def _update_headers(self):
