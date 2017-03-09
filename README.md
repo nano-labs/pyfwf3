@@ -498,7 +498,8 @@ This method is called before the line is parsed. At this point __self__ have:
 Use it to pre-filter, pre-validade or process the line before parsing.
 Ex:
 ```python
-from pyfwf3 import BaseLineParser, OrderedDict, InvalidLineError
+from collections import OrderedDict
+from pyfwf3 import BaseLineParser, InvalidLineError
 
 
 class CustomLineParser(BaseLineParser):
@@ -542,11 +543,12 @@ This method is called after the line is parsed. At this point you have a already
 Ex:
 ```python
 from datetime import datetime
-from pyfwf3 import BaseLineParser, OrderedDict, InvalidLineError
+from collections import OrderedDict
+from pyfwf3 import BaseLineParser, InvalidLineError
 
 
 class CustomLineParser(BaseLineParser):
-    """Age-available, address-set employed humans."""
+    """Age-available, address-set employed human."""
 
     _map = OrderedDict(
         [
@@ -563,12 +565,12 @@ class CustomLineParser(BaseLineParser):
     def _after_parse(self):
         """Customization on parsed line object."""
         try:
-            # Parse birthday as date object
+            # Parse birthday as datetime.date object
             self.birthday = datetime.strptime(self.birthday, "%Y%m%d").date()
         except ValueError:
             # There is some "unknown" values on my example file so I decided to
-            # set birthday as 1900-01-01 as failover. I also could skip those
-            # lines by raising InvalidLineError
+            # set birthday as 1900-01-01 as failover. I also could just skip
+            # those lines by raising InvalidLineError
             self.birthday = datetime(1900, 1, 1).date()
 
         # Set a new attribute 'age'
@@ -584,10 +586,72 @@ class CustomLineParser(BaseLineParser):
         # then update table headers so 'age' and 'address' become available and
         # remove 'location' and 'state'
         self._update_headers()
+        # You will note that the new fields will be added at the end of the
+        # table. If you want some specific column order just set self._headers
+        # manually
 
         # And also skip those who does not have a profession
         if not self.profession:
             raise InvalidLineError()
+```
+Then
+```pycon
+>>> fp = BaseFileParser.open("examples/humans.txt", CustomLineParser)
+>>> fp.lines[:5]
++------------------+--------+------------+----------+--------------+---------+-----+
+| name             | gender | birthday   | universe | profession   | address | age |
++------------------+--------+------------+----------+--------------+---------+-----+
+| Dianne Mcintosh  | F      | 1957-05-26 | Whatever | Medic        | US, AR  | 60  |
+| Rosalyn Clark    | M      | 1994-02-13 | Whatever | Comedian     | US, MI  | 23  |
+| Shirley Gray     | M      | 1951-04-03 | Whatever | Comedian     | US, WI  | 66  |
+| Georgia Frank    | F      | 2011-05-08 | Whatever | Comedian     | US, MD  | 6   |
+| Virginia Lambert | M      | 1993-04-04 | Whatever | Shark tammer | US, PA  | 24  |
++------------------+--------+------------+----------+--------------+---------+-----+
+>>> # Note that birthday is now a datetime.date instance
+>>> fp.lines[0].birthday
+datetime.date(1957, 5, 26)
+>>> # and you can use datetime attributes as special filters
+>>> fp.lines.filter(birthday__day=4, birthday__month=7)[:5]
++--------------------+--------+------------+----------+------------+---------+-----+
+| name               | gender | birthday   | universe | profession | address | age |
++--------------------+--------+------------+----------+------------+---------+-----+
+| Christopher Symons | M      | 2006-07-04 | Whatever | Comedian   | US, LA  | 11  |
+| Thomas Hughes      | F      | 2012-07-04 | Whatever | Medic      | US, PA  | 5   |
+| Anthony French     | F      | 2012-07-04 | Whatever | Student    | US, ND  | 5   |
+| Harry Carson       | M      | 1989-07-04 | Whatever | Student    | US, AK  | 28  |
+| Margaret Walks     | M      | 2012-07-04 | Whatever | Comedian   | US, AZ  | 5   |
++--------------------+--------+------------+----------+------------+---------+-----+
+>>> fp.lines.filter(birthday__gte=datetime(2000, 1, 1).date()).order_by("birthday")[:5]
++---------------+--------+------------+----------+--------------+---------+-----+
+| name          | gender | birthday   | universe | profession   | address | age |
++---------------+--------+------------+----------+--------------+---------+-----+
+| Peggy Brinlee | M      | 2000-01-01 | Whatever | Programmer   | US, CO  | 17  |
+| Tamara Kidd   | M      | 2000-01-03 | Whatever | Artist       | US, MN  | 17  |
+| Victor Fraley | M      | 2000-01-04 | Whatever | Shark tammer | US, IL  | 17  |
+| Joyce Lee     | F      | 2000-01-05 | Whatever | Programmer   | US, KY  | 17  |
+| Leigh Harley  | M      | 2000-01-06 | Whatever | Programmer   | US, NM  | 17  |
++---------------+--------+------------+----------+--------------+---------+-----+
+>>> # And age is also usable
+>>> fp.lines.filter(age=18)[:5]
++------------------+--------+------------+----------+--------------+---------+-----+
+| name             | gender | birthday   | universe | profession   | address | age |
++------------------+--------+------------+----------+--------------+---------+-----+
+| Gladys Martin    | F      | 1999-01-23 | Whatever | Medic        | US, WY  | 18  |
+| Justin Salinas   | M      | 1999-07-03 | Whatever | Shark tammer | US, ND  | 18  |
+| Sandra Carrousal | F      | 1999-10-09 | Whatever | Super hero   | US, NH  | 18  |
+| Edith Briggs     | F      | 1999-04-05 | Whatever | Medic        | US, AL  | 18  |
+| Patrick Mckinley | F      | 1999-03-18 | Whatever | Comedian     | US, ME  | 18  |
++------------------+--------+------------+----------+--------------+---------+-----+
+>>> fp.lines.filter(age__lt=18).order_by("age", reverse=True)[:5]
++--------------------+--------+------------+----------+--------------+---------+-----+
+| name               | gender | birthday   | universe | profession   | address | age |
++--------------------+--------+------------+----------+--------------+---------+-----+
+| Angela Armentrout  | F      | 2000-12-21 | Whatever | Artist       | US, MO  | 17  |
+| Christine Strassel | F      | 2000-10-22 | Whatever | Medic        | US, NE  | 17  |
+| Christopher Pack   | M      | 2000-03-22 | Whatever | Student      | US, IN  | 17  |
+| Manuela Lytle      | M      | 2000-12-18 | Whatever | Shark tammer | US, NV  | 17  |
+| Tamara Kidd        | M      | 2000-01-03 | Whatever | Artist       | US, MN  | 17  |
++--------------------+--------+------------+----------+--------------+---------+-----+
 ```
 
 
