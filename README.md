@@ -481,11 +481,12 @@ There is also 2 hidden fields that may be used, if needed:
 ```
 TODO: Allow special fields to be used
 
+
 # Models
 
 ## pyfwf3.BaseLineParser
 
-This is the class responsible for the actual parsing and have to be extended to set its parsing map, as explained on [Setting up your parser](#Setting up your parser). It also responsible for all the magic before and after parsing by the use of [_before_parse()](#_before_parse()) and [_after_parse()](#_after_parse()) methods
+This is the class responsible for the actual parsing and have to be extended to set its parsing map, as explained on [Setting up your parser](#setting-up-your-parser). It also responsible for all the magic before and after parsing by the use of [_before_parse()](#_before_parse) and [_after_parse()](#-after-parse) methods
 
 ### _before_parse()
 This method is called before the line is parsed. At this point __self__ have:
@@ -496,6 +497,7 @@ This method is called before the line is parsed. At this point __self__ have:
 - self._map: The field mapping for the parsing
 
 Use it to pre-filter, pre-validade or process the line before parsing.
+
 Ex:
 ```python
 from collections import OrderedDict
@@ -519,10 +521,10 @@ class CustomLineParser(BaseLineParser):
 
     def _before_parse(self):
         """Do some pre-process before the parsing."""
-        # Validate line size
+        # Validate line size to avoid malformed lines
         # an InvalidLineError will make this line to be skipped
         # any other error will break the parsing
-        if not len(self._unparsed_line) == 81:
+        if not len(self._unparsed_line) == 82:
             raise InvalidLineError()
 
         # As I know that the first characters are reserved for location I will
@@ -537,9 +539,31 @@ class CustomLineParser(BaseLineParser):
         # string to self._parsable_line. I don't want to loose the unparsed
         # value because it is useful for further debug
 ```
+Then use it as you like
+```pycon
+>>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
+>>> parsed.lines[:5]
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| DIANNE MCINTOSH  | F      | 19570526 | US       | AR    | WHATEVER | MEDIC        |
+| ROSALYN CLARK    | M      | 19940213 | US       | MI    | WHATEVER | COMEDIAN     |
+| SHIRLEY GRAY     | M      | 19510403 | US       | WI    | WHATEVER | COMEDIAN     |
+| GEORGIA FRANK    | F      | 20110508 | US       | MD    | WHATEVER | COMEDIAN     |
+| VIRGINIA LAMBERT | M      | 19930404 | US       | PA    | WHATEVER | SHARK TAMMER |
++------------------+--------+----------+----------+-------+----------+--------------+
+>>> # Note that everything is uppercased
+>>> # And there is nobody who is not from US
+>>> parsed.lines.exclude(location="US").count()
+0
+>>> parsed.lines.unique("location")
+['US']
+```
+
 
 ### _after_parse()
 This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some lines.
+
 Ex:
 ```python
 from datetime import datetime
@@ -586,7 +610,7 @@ class CustomLineParser(BaseLineParser):
         # then update table headers so 'age' and 'address' become available and
         # remove 'location' and 'state'
         self._update_headers()
-        # You will note that the new fields will be added at the end of the
+        # You will note that the new columns will be added at the end of the
         # table. If you want some specific column order just set self._headers
         # manually
 
@@ -594,10 +618,10 @@ class CustomLineParser(BaseLineParser):
         if not self.profession:
             raise InvalidLineError()
 ```
-Then
+Then just use as you like
 ```pycon
->>> fp = BaseFileParser.open("examples/humans.txt", CustomLineParser)
->>> fp.lines[:5]
+>>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
+>>> parsed.lines[:5]
 +------------------+--------+------------+----------+--------------+---------+-----+
 | name             | gender | birthday   | universe | profession   | address | age |
 +------------------+--------+------------+----------+--------------+---------+-----+
@@ -608,10 +632,10 @@ Then
 | Virginia Lambert | M      | 1993-04-04 | Whatever | Shark tammer | US, PA  | 24  |
 +------------------+--------+------------+----------+--------------+---------+-----+
 >>> # Note that birthday is now a datetime.date instance
->>> fp.lines[0].birthday
+>>> parsed.lines[0].birthday
 datetime.date(1957, 5, 26)
 >>> # and you can use datetime attributes as special filters
->>> fp.lines.filter(birthday__day=4, birthday__month=7)[:5]
+>>> parsed.lines.filter(birthday__day=4, birthday__month=7)[:5]
 +--------------------+--------+------------+----------+------------+---------+-----+
 | name               | gender | birthday   | universe | profession | address | age |
 +--------------------+--------+------------+----------+------------+---------+-----+
@@ -621,7 +645,7 @@ datetime.date(1957, 5, 26)
 | Harry Carson       | M      | 1989-07-04 | Whatever | Student    | US, AK  | 28  |
 | Margaret Walks     | M      | 2012-07-04 | Whatever | Comedian   | US, AZ  | 5   |
 +--------------------+--------+------------+----------+------------+---------+-----+
->>> fp.lines.filter(birthday__gte=datetime(2000, 1, 1).date()).order_by("birthday")[:5]
+>>> parsed.lines.filter(birthday__gte=datetime(2000, 1, 1).date()).order_by("birthday")[:5]
 +---------------+--------+------------+----------+--------------+---------+-----+
 | name          | gender | birthday   | universe | profession   | address | age |
 +---------------+--------+------------+----------+--------------+---------+-----+
@@ -632,7 +656,7 @@ datetime.date(1957, 5, 26)
 | Leigh Harley  | M      | 2000-01-06 | Whatever | Programmer   | US, NM  | 17  |
 +---------------+--------+------------+----------+--------------+---------+-----+
 >>> # And age is also usable
->>> fp.lines.filter(age=18)[:5]
+>>> parsed.lines.filter(age=18)[:5]
 +------------------+--------+------------+----------+--------------+---------+-----+
 | name             | gender | birthday   | universe | profession   | address | age |
 +------------------+--------+------------+----------+--------------+---------+-----+
@@ -642,7 +666,7 @@ datetime.date(1957, 5, 26)
 | Edith Briggs     | F      | 1999-04-05 | Whatever | Medic        | US, AL  | 18  |
 | Patrick Mckinley | F      | 1999-03-18 | Whatever | Comedian     | US, ME  | 18  |
 +------------------+--------+------------+----------+--------------+---------+-----+
->>> fp.lines.filter(age__lt=18).order_by("age", reverse=True)[:5]
+>>> parsed.lines.filter(age__lt=18).order_by("age", reverse=True)[:5]
 +--------------------+--------+------------+----------+--------------+---------+-----+
 | name               | gender | birthday   | universe | profession   | address | age |
 +--------------------+--------+------------+----------+--------------+---------+-----+
@@ -657,11 +681,80 @@ datetime.date(1957, 5, 26)
 
 ## pyfwf3.BaseFileParser
 
-This class will center all file data but its a very small class. May be used directly or extended to set its line parser
+This class will center all file data and needs a line parser to do the actual parsing. So you will need a class extended from [BaseLineParser](#pyfwf3-baselineparser). I'll consider that you already have your CustomLineParser class so:
+```pycon
+>>> from pyfwf3 import BaseFileParser
+>>> # Let's say that you already created your CustomLineParser class
+>>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
+>>> parsed.lines[:5]
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| Dianne Mcintosh  | F      | 19570526 | US       | AR    | Whatever | Medic        |
+| Rosalyn Clark    | M      | 19940213 | US       | MI    | Whatever | Comedian     |
+| Shirley Gray     | M      | 19510403 | US       | WI    | Whatever | Comedian     |
+| Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
+| Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
++------------------+--------+----------+----------+-------+----------+--------------+
+```
+Or you may extend BaseFileParser for semantics sake
+```python
+from pyfwf3 import BaseFileParser
 
 
+class HumanParser(BaseFileParser):
+    """File parser for humans.txt example file."""
 
-### TODOs
+    # Let's say that you already created your CustomLineParser class
+    _line_parser = CustomLineParser
+```
+Now you just
+```pycon
+>>> parsed = HumanParser.open("examples/humans.txt")
+>>> parsed.lines[:5]
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| Dianne Mcintosh  | F      | 19570526 | US       | AR    | Whatever | Medic        |
+| Rosalyn Clark    | M      | 19940213 | US       | MI    | Whatever | Comedian     |
+| Shirley Gray     | M      | 19510403 | US       | WI    | Whatever | Comedian     |
+| Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
+| Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
++------------------+--------+----------+----------+-------+----------+--------------+
+```
+
+### .open(filename, line_parser=None)
+This class method actually open the given file, parse it, close it and return a parsed file instance. Pretty much every example here is using .open()
+
+You may define your line parser class here, if you what, but for semantics sake I recommend that 
+you extend BaseFileParser to set you line parser there.
+
+#### Parse an already opened file
+You also may parse a already opened file, StringIO, downloaded file or any IO instance that you have. For that just create a instance directly
+```pycon
+>>> from pyfwf3 import BaseFileParser
+>>> # Let's say that you already created your CustomLineParser class
+>>> f = open("examples/humans.txt", "r")
+>>> parsed = BaseFileParser(f, CustomLineParser)
+>>> # Always remember to close your files or use "with" statement to do so
+>>> f.close()
+>>> parsed.lines[:5]
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| Dianne Mcintosh  | F      | 19570526 | US       | AR    | Whatever | Medic        |
+| Rosalyn Clark    | M      | 19940213 | US       | MI    | Whatever | Comedian     |
+| Shirley Gray     | M      | 19510403 | US       | WI    | Whatever | Comedian     |
+| Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
+| Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
++------------------+--------+----------+----------+-------+----------+--------------+
+```
+
+### __.lines__ attribute
+Your parsed file have a __.lines__ attribute. Thats your complete parsed [queryset](queryset)
+
+
+## TODOs:
 - Recursive special filters like: birthday__year__lt
 - Filter with same line like: .filter(start_day=L("end_day"))
 - Multi-column order like: .order_by("-age", "name")
