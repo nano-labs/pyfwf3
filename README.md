@@ -176,7 +176,7 @@ With your parsed file as a BaseFileParser instance you have all lines stored as 
 
 ### .filter(**kwargs)
 
-Here is where the magic happens. A filtered queryset will always return a new queryset that can be filtered and so and so
+Here is where the magic happens. A filtered queryset will always return a new queryset that can be filtered too and so and so
 ```pycon
 >>> parsed = HumanFileParser.open("examples/humans.txt")
 >>> first5 = parsed.lines[:5]
@@ -191,7 +191,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Georgia Frank    | 20110508 | F      |
 | Virginia Lambert | 19930404 | M      |
 +------------------+----------+--------+
->>> # And it cant be filtered
+>>> # And it still can be filtered
 >>> first5.filter(gender="F")
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -207,7 +207,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Rosalyn Clark    | 19940213 | M      |
 | Virginia Lambert | 19930404 | M      |
 +------------------+----------+--------+
->>> # or chained
+>>> # or chained filters
 >>> firts5.filter(name__endswith="k").filter(gender=F)
 +------------------+----------+--------+
 | name             | birthday | gender |
@@ -215,7 +215,7 @@ Here is where the magic happens. A filtered queryset will always return a new qu
 | Georgia Frank    | 20110508 | F      |
 +------------------+----------+--------+
 ```
-Some special filters may be used with __ notation. Here some but not limited to:
+Some special filters may be used with __ notation. Here are some but not limited to:
 - __in: value is in a list
 - __lt: less than
 - __lte: less than or equals
@@ -227,3 +227,138 @@ Some special filters may be used with __ notation. Here some but not limited to:
 - __endswith: value ends with that string
 
 It will actually look for any attribute or method of the field object that matches with __'object.somefilter'__ or __'object.\_\_somefilter\_\_'__ and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse()) method to convert the __'birthday'__ field into __datetime.date__ instances you can now filter using, for example, __.filter(birthday\_\_year=1957)__
+
+### .exclude(**kwargs)
+
+Pretty much the opposite of filter
+```pycon
+>>> parsed = HumanFileParser.open("examples/humans.txt")
+>>> first5 = parsed.lines[:5]
+>>> firts5
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Dianne Mcintosh  | 19570526 | F      |
+| Rosalyn Clark    | 19940213 | M      |
+| Shirley Gray     | 19510403 | M      |
+| Georgia Frank    | 20110508 | F      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+>>> first5.exclude(gender="F")
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Rosalyn Clark    | 19940213 | M      |
+| Shirley Gray     | 19510403 | M      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+```
+
+### .order_by(field_name, reverse=False)
+
+Reorder the whole queryset sorting by that given field
+```pycon
+>>> parsed = HumanFileParser.open("examples/humans.txt")
+>>> parsed.lines[:5]
++------------------+----------+--------+
+| name             | birthday | gender |
++------------------+----------+--------+
+| Dianne Mcintosh  | 19570526 | F      |
+| Rosalyn Clark    | 19940213 | M      |
+| Shirley Gray     | 19510403 | M      |
+| Georgia Frank    | 20110508 | F      |
+| Virginia Lambert | 19930404 | M      |
++------------------+----------+--------+
+>>> parsed.lines[:5].order_by("name")
++------------------+--------+----------+
+| name             | gender | birthday |
++------------------+--------+----------+
+| Dianne Mcintosh  | F      | 19570526 |
+| Georgia Frank    | F      | 20110508 |
+| Rosalyn Clark    | M      | 19940213 |
+| Shirley Gray     | M      | 19510403 |
+| Virginia Lambert | M      | 19930404 |
++------------------+--------+----------+
+>>> parsed.lines[:5].order_by("name", reverse=True)
++------------------+--------+----------+
+| name             | gender | birthday |
++------------------+--------+----------+
+| Virginia Lambert | M      | 19930404 |
+| Shirley Gray     | M      | 19510403 |
+| Rosalyn Clark    | M      | 19940213 |
+| Georgia Frank    | F      | 20110508 |
+| Dianne Mcintosh  | F      | 19570526 |
++------------------+--------+----------+
+```
+TODO: Order by more than one field and order by special field
+
+
+### .unique(field_name)
+
+Return a list o unique values for that field. For this example I will use complete line parser for that humans.txt file
+```python
+from collections import OrderedDict
+
+class CompleteHuman(BaseLineParser):
+    """Complete line parser for humans.txt example file."""
+
+    _map = OrderedDict(
+        [
+            ("name", slice(32, 56)),
+            ("gender", slice(19, 20)),
+            ("birthday", slice(11, 19)),
+            ("location", slice(0, 9)),
+            ("state", slice(9, 11)),
+            ("universe", slice(56, 68)),
+            ("profession", slice(68, 81)),
+        ]
+    )
+
+
+class CompleteHumanFileParser(BaseFileParser):
+    """Complete file parser for humans.txt example file."""
+
+    _line_parser = CompleteHuman
+
+```
+```pycon
+>>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
+>>> parsed.lines[:5]
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| Dianne Mcintosh  | F      | 19570526 | US       | AR    | Whatever | Medic        |
+| Rosalyn Clark    | M      | 19940213 | US       | MI    | Whatever | Comedian     |
+| Shirley Gray     | M      | 19510403 | US       | WI    | Whatever | Comedian     |
+| Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
+| Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
++------------------+--------+----------+----------+-------+----------+--------------+
+>>> # Looking into all lines
+>>> parsed.lines.unique("gender")
+['F', 'M']
+>>> parsed.lines.unique("profession")
+['', 'Time traveler', 'Student', 'Berserk', 'Hero', 'Soldier', 'Super hero', 'Shark tammer', 'Artist', 'Hunter', 'Cookie maker', 'Comedian', 'Mecromancer', 'Programmer', 'Medic', 'Siren']
+>>> parsed.lines.unique("state")
+['', 'MT', 'WA', 'NY', 'AZ', 'MD', 'LA', 'IN', 'IL', 'WY', 'OK', 'NJ', 'VT', 'OH', 'AR', 'FL', 'DE', 'KS', 'NC', 'NM', 'MA', 'NH', 'ME', 'CT', 'MS', 'RI', 'ID', 'HI', 'NE', 'TN', 'AL', 'MN', 'TX', 'WV', 'KY', 'CA', 'NV', 'AK', 'IA', 'PA', 'UT', 'SD', 'CO', 'MI', 'VA', 'GA', 'ND', 'OR', 'SC', 'WI', 'MO']
+```
+
+### .count()
+
+Return how many lines are on that queryset
+
+```pycon
+>>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
+>>> Total
+>>> parsed.lines.count()
+10012
+>>> # How many are women
+>>> parsed.lines.filter(gender="F").count()
+4979
+>>> # How many womans from New York or California
+>>> parsed.lines.filter(gender="F", state__in=["NY", "CA"]).count()
+197
+>>> # How many mens born on 1960 or later
+>>> parsed.lines.filter(gender="M").exclude(birthday__lt="19600101").count()
+4321
+```
+
