@@ -425,7 +425,7 @@ Returns a __ValuesList__ instance which is in fact a extended __list__ object wi
 
 There is also 2 hidden fields that may be used, if needed:
 - _line_number: The line number on the original file, counting even if some line is skipped during parsing
-- _original_line: The unchanged and unparsed original line, with original line breakers at the end
+- _unparsed_line: The unchanged and unparsed original line, with original line breakers at the end
 
 ```pycon
 >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
@@ -450,10 +450,10 @@ There is also 2 hidden fields that may be used, if needed:
 | 3446         | Gilbert Garcia   | M      | 19400125 | US       | NC    | Whatever     | Student    |
 | 6378         | Helen Villarreal | F      | 19400125 | US       | MD    | Whatever     |            |
 +--------------+------------------+--------+----------+----------+-------+--------------+------------+
->>> # Note the trailing whitespaces and breakline on _original_line
->>> parsed.lines[:5].values("_line_number", "_original_line")
+>>> # Note the trailing whitespaces and breakline on _unparsed_line
+>>> parsed.lines[:5].values("_line_number", "_unparsed_line")
 +--------------+-----------------------------------------------------------------------------------+
-| _line_number | _original_line                                                                    |
+| _line_number | _unparsed_line                                                                    |
 +--------------+-----------------------------------------------------------------------------------+
 | 1            | US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic         |
 |              |                                                                                   |
@@ -466,7 +466,7 @@ There is also 2 hidden fields that may be used, if needed:
 | 5            | US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer  |
 |              |                                                                                   |
 +--------------+-----------------------------------------------------------------------------------+
->>> parsed.lines[:5].values("_line_number", "_original_line")[:]
+>>> parsed.lines[:5].values("_line_number", "_unparsed_line")[:]
 [(1,
   'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'),
  (2,
@@ -489,10 +489,106 @@ This is the class responsible for the actual parsing and have to be extended to 
 
 ### _before_parse()
 This method is called before the line is parsed. At this point __self__ have:
-- self._original_line: The line to be parsed
+- self._unparsed_line: Original unchanged line
+- self._parsable_line: Line to be parsed. If None given self._unparsed_line wil be used
 - self._line_number: File line number
 - self._headers: Name of all soon-to-be-available fields
 - self._map: The field mapping for the parsing
+
+Use it to pre-filter, pre-validade or process the line before parsing.
+Ex:
+```python
+from pyfwf3 import BaseLineParser, OrderedDict, InvalidLineError
+
+
+class CustomLineParser(BaseLineParser):
+    """Validated, uppercased U.S.A-only humans."""
+
+    _map = OrderedDict(
+        [
+            ("name", slice(32, 56)),
+            ("gender", slice(19, 20)),
+            ("birthday", slice(11, 19)),
+            ("location", slice(0, 9)),
+            ("state", slice(9, 11)),
+            ("universe", slice(56, 68)),
+            ("profession", slice(68, 81)),
+        ]
+    )
+
+    def _before_parse(self):
+        """Do some pre-process before the parsing."""
+        # Validate line size
+        # an InvalidLineError will make this line to be skipped
+        # any other error will break the parsing
+        if not len(self._unparsed_line) == 81:
+            raise InvalidLineError()
+
+        # As I know that the first characters are reserved for location I will
+        # pre-filter any person that are not from U.S.A (Trumping) even before
+        # parsing it
+        if not self._unparsed_line.startswith("US"):
+            raise InvalidLineError()
+
+        # Then put everything uppercased
+        self._parsable_line = self._unparsed_line.upper()
+        # Note that instead of changing self._unparsed_line I've set the new
+        # string to self._parsable_line. I don't want to loose the unparsed
+        # value because it is useful for further debug
+```
+
+### _after_parse()
+This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some lines.
+Ex:
+```python
+from datetime import datetime
+from pyfwf3 import BaseLineParser, OrderedDict, InvalidLineError
+
+
+class CustomLineParser(BaseLineParser):
+    """Age-available, address-set employed humans."""
+
+    _map = OrderedDict(
+        [
+            ("name", slice(32, 56)),
+            ("gender", slice(19, 20)),
+            ("birthday", slice(11, 19)),
+            ("location", slice(0, 9)),
+            ("state", slice(9, 11)),
+            ("universe", slice(56, 68)),
+            ("profession", slice(68, 81)),
+        ]
+    )
+
+    def _after_parse(self):
+        """Customization on parsed line object."""
+        try:
+            # Parse birthday as date object
+            self.birthday = datetime.strptime(self.birthday, "%Y%m%d").date()
+        except ValueError:
+            # There is some "unknown" values on my example file so I decided to
+            # set birthday as 1900-01-01 as failover. I also could skip those
+            # lines by raising InvalidLineError
+            self.birthday = datetime(1900, 1, 1).date()
+
+        # Set a new attribute 'age'
+        # Yeah, I know, it's not the proper way to calc someone's age but stil...
+        self.age = datetime.today().year - self.birthday.year
+
+        # Combine 'location' and 'state' to create 'address' field
+        self.address = "{}, {}".format(self.location, self.state)
+        # and remove location and state
+        del self.location
+        del self.state
+
+        # then update table headers so 'age' and 'address' become available and
+        # remove 'location' and 'state'
+        self._update_headers()
+
+        # And also skip those who does not have a profession
+        if not self.profession:
+            raise InvalidLineError()
+```
 
 
 ## pyfwf3.BaseFileParser
