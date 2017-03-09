@@ -370,3 +370,109 @@ Return how many lines there are on that queryset
 4321
 ```
 
+### .values(*fields)
+
+This method should be used to actually returns data from a queryset. Will return the specified fields only or all if none was specified.
+
+Returns a __ValuesList__ instance which is in fact a extended __list__ object with overwriten __\_\_repr\_\___ method just to look like a table on shell, so on every other aspect it is a list. May be a list o tuples, if more the one column is returned, or a simple list if only one field was specified
+
+```pycon
+>>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
+>>> parsed.lines[:5].values("name")
++------------------+
+| name             |
++------------------+
+| Dianne Mcintosh  |
+| Rosalyn Clark    |
+| Shirley Gray     |
+| Georgia Frank    |
+| Virginia Lambert |
++------------------+
+>>> # even though it looks like a table it is actually a list
+>>> parsed.lines[:5].values("name")[:]
+['Dianne Mcintosh',
+ 'Rosalyn Clark',
+ 'Shirley Gray',
+ 'Georgia Frank',
+ 'Virginia Lambert']
+>>> parsed.lines[:5].values("name", "state")
++------------------+-------+
+| name             | state |
++------------------+-------+
+| Dianne Mcintosh  | AR    |
+| Rosalyn Clark    | MI    |
+| Shirley Gray     | WI    |
+| Georgia Frank    | MD    |
+| Virginia Lambert | PA    |
++------------------+-------+
+>>> # or a list o tuples
+>>> parsed.lines[:5].values("name", "state")[:]
+[('Dianne Mcintosh', 'AR'),
+ ('Rosalyn Clark', 'MI'),
+ ('Shirley Gray', 'WI'),
+ ('Georgia Frank', 'MD'),
+ ('Virginia Lambert', 'PA')]
+>>> # If no field is specified it will return all
+>>> parsed.lines[:5].values()
++------------------+--------+----------+----------+-------+----------+--------------+
+| name             | gender | birthday | location | state | universe | profession   |
++------------------+--------+----------+----------+-------+----------+--------------+
+| Dianne Mcintosh  | F      | 19570526 | US       | AR    | Whatever | Medic        |
+| Rosalyn Clark    | M      | 19940213 | US       | MI    | Whatever | Comedian     |
+| Shirley Gray     | M      | 19510403 | US       | WI    | Whatever | Comedian     |
+| Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
+| Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
++------------------+--------+----------+----------+-------+----------+--------------+
+>>> parsed.lines[:5].values()[:]
+[('Dianne Mcintosh', 'F', '19570526', 'US', 'AR', 'Whatever', 'Medic'),
+ ('Rosalyn Clark', 'M', '19940213', 'US', 'MI', 'Whatever', 'Comedian'),
+ ('Shirley Gray', 'M', '19510403', 'US', 'WI', 'Whatever', 'Comedian'),
+ ('Georgia Frank', 'F', '20110508', 'US', 'MD', 'Whatever', 'Comedian'),
+ ('Virginia Lambert', 'M', '19930404', 'US', 'PA', 'Whatever', 'Shark tammer')]
+>>> # Note that you dont need to slice the result with '[:]'. I am only doing it to show the response structure behind the table representation
+```
+
+There is also 2 hidden fields that may be used, if needed:
+- _line_number: The line number on the original file, counting even if some line is skipped during parsing
+- _original_line: The unchanged and unparsed original line, with original line breakers at the end
+
+```pycon
+>>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
+>>> parsed.lines.order_by("birthday")[:5].values("_line_number", "name")
++--------------+------------------+
+| _line_number | name             |
++--------------+------------------+
+| 4328         | John Cleese      |
+| 9282         | Johnny Andres    |
+| 8466         | Oscar Callaghan  |
+| 3446         | Gilbert Garcia   |
+| 6378         | Helen Villarreal |
++--------------+------------------+
+>>> # or a little hacking to add it
+>>> parsed.lines.order_by("birthday")[:5].values("_line_number", *parsed._line_parser._map.keys())
++--------------+------------------+--------+----------+----------+-------+--------------+------------+
+| _line_number | name             | gender | birthday | location | state | universe     | profession |
++--------------+------------------+--------+----------+----------+-------+--------------+------------+
+| 4328         | John Cleese      | M      | 19391027 | UK       |       | Monty Python | Comedian   |
+| 9282         | Johnny Andres    | F      | 19400107 | US       | TX    | Whatever     | Student    |
+| 8466         | Oscar Callaghan  | M      | 19400121 | US       | ID    | Whatever     | Comedian   |
+| 3446         | Gilbert Garcia   | M      | 19400125 | US       | NC    | Whatever     | Student    |
+| 6378         | Helen Villarreal | F      | 19400125 | US       | MD    | Whatever     |            |
++--------------+------------------+--------+----------+----------+-------+--------------+------------+
+>>> # Note the breakline on _original_line
+>>> parsed.lines[:5].values("_line_number", "_original_line")
++--------------+-----------------------------------------------------------------------------------+
+| _line_number | _original_line                                                                    |
++--------------+-----------------------------------------------------------------------------------+
+| 1            | US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic         |
+|              |                                                                                   |
+| 2            | US       MI19940213M706a6e0afc3dRosalyn Clark           Whatever    Comedian      |
+|              |                                                                                   |
+| 3            | US       WI19510403M451ed630accbShirley Gray            Whatever    Comedian      |
+|              |                                                                                   |
+| 4            | US       MD20110508F7e5cd7324f38Georgia Frank           Whatever    Comedian      |
+|              |                                                                                   |
+| 5            | US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer  |
+|              |                                                                                   |
++--------------+-----------------------------------------------------------------------------------+
+```
