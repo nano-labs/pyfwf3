@@ -8,16 +8,16 @@ I made this for myself because I was having some bad times to filter and debug d
 
 When you have files like this:
 ```
-USAR19570526Fbe56008be36eDianne Mcintosh WhateverMedic        
-USMI19940213M706a6e0afc3dRosalyn Clark   WhateverComedian     
-USWI19510403M451ed630accbShirley Gray    WhateverComedian     
-USMD20110508F7e5cd7324f38Georgia Frank   WhateverComedian     
-USPA19930404Mecc7f17c16a6Virginia LambertWhateverShark tammer 
-USVT19770319Fd2bd88100facRichard Botto   WhateverTime traveler
-USOK19910917F9c704139a6e3Alberto Giel    WhateverStudent      
-USNV20120604F5f02187599d7Mildred Henke   WhateverSuper hero   
-USRI19820125Fcf54b2eb5219Marc Kidd       WhateverMedic        
-USME20080503F0f51da89a299Kelly Crose     WhateverComedian     
+USAR19570526Fbe56008be36eDianne Mcintosh WhateverMedic        \n
+USMI19940213M706a6e0afc3dRosalyn Clark   WhateverComedian     \n
+USWI19510403M451ed630accbShirley Gray    WhateverComedian     \n
+USMD20110508F7e5cd7324f38Georgia Frank   WhateverComedian     \n
+USPA19930404Mecc7f17c16a6Virginia LambertWhateverShark tammer \n
+USVT19770319Fd2bd88100facRichard Botto   WhateverTime traveler\n
+USOK19910917F9c704139a6e3Alberto Giel    WhateverStudent      \n
+USNV20120604F5f02187599d7Mildred Henke   WhateverSuper hero   \n
+USRI19820125Fcf54b2eb5219Marc Kidd       WhateverMedic        \n
+USME20080503F0f51da89a299Kelly Crose     WhateverComedian     \n
 ...
 ```
 where each line represents one dataset and the data is concatenated on that line.
