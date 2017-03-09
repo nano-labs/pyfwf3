@@ -85,6 +85,7 @@ and so on. But I only want name, birthday and gender so let's write it's model
 ```python
 from pyfwf3 import BaseLineParser
 
+
 class Human(BaseLineParser):
     """Parser for each line of that humans.txt file."""
 
@@ -106,12 +107,14 @@ That's it. Your file is parsed and now usable but let's put it together:
 ```python
 from pyfwf3 import BaseLineParser, BaseFileParser
 
+
 class Human(BaseLineParser):
     """Parser for each line of that humans.txt file."""
 
     _map = {"name": slice(32, 56),
             "gender": slice(19, 20),
             "birthday": slice(11, 19)}
+
 
 parsed = BaseFileParser.open("examples/humnas.txt", line_parser=Human)
 ```
@@ -119,12 +122,14 @@ or even
 ```python
 from pyfwf3 import BaseLineParser, BaseFileParser
 
+
 class Human(BaseLineParser):
     """Parser for each line of that humans.txt file."""
 
     _map = {"name": slice(32, 56),
             "gender": slice(19, 20),
             "birthday": slice(11, 19)}
+
 
 class HumanFileParser(BaseFileParser):
     """Parser for that humans.txt file."""
@@ -230,7 +235,7 @@ It will actually look for any attribute or method of the field object that match
 
 ### .exclude(**kwargs)
 
-Pretty much the opposite of filter
+Pretty much the opposite of [.filter()](#.filter(**kwargs))
 ```pycon
 >>> parsed = HumanFileParser.open("examples/humans.txt")
 >>> first5 = parsed.lines[:5]
@@ -298,6 +303,8 @@ TODO: Order by more than one field and order by special field
 Return a list o unique values for that field. For this example I will use complete line parser for that humans.txt file
 ```python
 from collections import OrderedDict
+from pyfwf3 import BaseLineParser, BaseFileParser
+
 
 class CompleteHuman(BaseLineParser):
     """Complete line parser for humans.txt example file."""
@@ -341,14 +348,15 @@ class CompleteHumanFileParser(BaseFileParser):
 >>> parsed.lines.unique("state")
 ['', 'MT', 'WA', 'NY', 'AZ', 'MD', 'LA', 'IN', 'IL', 'WY', 'OK', 'NJ', 'VT', 'OH', 'AR', 'FL', 'DE', 'KS', 'NC', 'NM', 'MA', 'NH', 'ME', 'CT', 'MS', 'RI', 'ID', 'HI', 'NE', 'TN', 'AL', 'MN', 'TX', 'WV', 'KY', 'CA', 'NV', 'AK', 'IA', 'PA', 'UT', 'SD', 'CO', 'MI', 'VA', 'GA', 'ND', 'OR', 'SC', 'WI', 'MO']
 ```
+TODO: Unique by special field
 
 ### .count()
 
-Return how many lines are on that queryset
+Return how many lines there are on that queryset
 
 ```pycon
 >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
->>> Total
+>>> # Total
 >>> parsed.lines.count()
 10012
 >>> # How many are women
