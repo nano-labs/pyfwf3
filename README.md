@@ -1,4 +1,4 @@
-# pyfwf3 - Fixed-Width Field File Format parser and tools
+# pyfwf3 - Fixed-Width-Field File Format parser and tools
 
 Lib to help you handle those files that joins all data relying only on the lenght of each field.
 I made this for myself because I was having some bad times to filter and debug data from some huge stock market files with hundreds of thousands of lines.
@@ -61,7 +61,7 @@ First thing you need to know is the width of each column on your file. There's n
 
 Lets take [this file](https://github.com/nano-labs/pyfwf3/blob/master/examples/humans.txt) as example. Here its first line:
 ```
-US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        
+'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'
 ```
 By testing, splitting, trying or whatever I know that:
 - First 9 characters are reserved for that person location
@@ -129,7 +129,7 @@ class HumanFileParser(BaseFileParser):
 
 parsed = HumanFileParser.open("examples/humans.txt")
 ```
-We will discuss those classes in the [future](#BaseLineParser)
+We will discuss those classes in the [future](#pyfwf3baselineparser)
 
 
 ## Queryset
@@ -222,11 +222,11 @@ Some special filters may be used with __ notation. Here are some but not limited
 - __startswith: value starts with that string
 - __endswith: value ends with that string
 
-It will actually look for any attribute or method of the field object that matches with __'object.somefilter'__ or __'object.\_\_somefilter\_\_'__ and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse()) method to convert the __'birthday'__ field into __datetime.date__ instances you can now filter using, for example, __.filter(birthday\_\_year=1957)__
+It will actually look for any attribute or method of the field object that matches with __'object.somefilter'__ or __'object.\_\_somefilter\_\_'__ and call it or compare with it. So let's say that you use the [_after_parse()](#_after_parse) method to convert the __'birthday'__ field into __datetime.date__ instances you can now filter using, for example, __.filter(birthday\_\_year=1957)__
 
 ### .exclude(**kwargs)
 
-Pretty much the opposite of [.filter()](#.filter(**kwargs))
+Pretty much the opposite of [.filter()](#filterkwargs)
 ```pycon
 >>> parsed = HumanFileParser.open("examples/humans.txt")
 >>> first5 = parsed.lines[:5]
@@ -343,7 +343,7 @@ TODO: Unique by special field
 
 ### .count()
 
-Return how many lines there are on that queryset
+Return how many lines are there on that queryset
 
 ```pycon
 >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
@@ -467,16 +467,11 @@ There is also 2 hidden fields that may be used, if needed:
 |              |                                                                                   |
 +--------------+-----------------------------------------------------------------------------------+
 >>> parsed.lines[:5].values("_line_number", "_unparsed_line")[:]
-[(1,
-  'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'),
- (2,
-  'US       MI19940213M706a6e0afc3dRosalyn Clark           Whatever    Comedian     \n'),
- (3,
-  'US       WI19510403M451ed630accbShirley Gray            Whatever    Comedian     \n'),
- (4,
-  'US       MD20110508F7e5cd7324f38Georgia Frank           Whatever    Comedian     \n'),
- (5,
-  'US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer \n')]
+[(1, 'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'),
+ (2, 'US       MI19940213M706a6e0afc3dRosalyn Clark           Whatever    Comedian     \n'),
+ (3, 'US       WI19510403M451ed630accbShirley Gray            Whatever    Comedian     \n'),
+ (4, 'US       MD20110508F7e5cd7324f38Georgia Frank           Whatever    Comedian     \n'),
+ (5, 'US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer \n')]
 
 ```
 TODO: Allow special fields to be used
@@ -486,7 +481,7 @@ TODO: Allow special fields to be used
 
 ## pyfwf3.BaseLineParser
 
-This is the class responsible for the actual parsing and have to be extended to set its parsing map, as explained on [Setting up your parser](#setting-up-your-parser). It also responsible for all the magic before and after parsing by the use of [_before_parse()](#_before_parse) and [_after_parse()](#-after-parse) methods
+This is the class responsible for the actual parsing and have to be extended to set its parsing map, as explained on [Setting up your parser](#setting-up-your-parser). It also responsible for all the magic before and after parsing by the use of [_before_parse()](#_before_parse) and [_after_parse()](#_after_parse) methods
 
 ### _before_parse()
 This method is called before the line is parsed. At this point __self__ have:
@@ -681,7 +676,7 @@ datetime.date(1957, 5, 26)
 
 ## pyfwf3.BaseFileParser
 
-This class will center all file data and needs a line parser to do the actual parsing. So you will need a class extended from [BaseLineParser](#pyfwf3-baselineparser). I'll consider that you already have your CustomLineParser class so:
+This class will center all file data and needs a line parser to do the actual parsing. So you will need a class extended from [BaseLineParser](#pyfwf3baselineparser). I'll consider that you already have your CustomLineParser class so:
 ```pycon
 >>> from pyfwf3 import BaseFileParser
 >>> # Let's say that you already created your CustomLineParser class
@@ -724,13 +719,13 @@ Now you just
 ```
 
 ### .open(filename, line_parser=None)
-This class method actually open the given file, parse it, close it and return a parsed file instance. Pretty much every example here is using .open()
+This class method actually open the given file, parse it, close it and return a parsed file instance. Pretty much every example here is using __.open()__
 
 You may define your line parser class here, if you what, but for semantics sake I recommend that 
 you extend BaseFileParser to set you line parser there.
 
 #### Parse an already opened file
-You also may parse a already opened file, StringIO, downloaded file or any IO instance that you have. For that just create a instance directly
+You also may parse a already opened file, StringIO, downloaded file or any IO instance that you have. For that just create an instance directly
 ```pycon
 >>> from pyfwf3 import BaseFileParser
 >>> # Let's say that you already created your CustomLineParser class
@@ -751,10 +746,11 @@ You also may parse a already opened file, StringIO, downloaded file or any IO in
 ```
 
 ### __.lines__ attribute
-Your parsed file have a __.lines__ attribute. Thats your complete parsed [queryset](queryset)
+Your parsed file have a __.lines__ attribute. Thats your complete parsed [queryset](#queryset)
 
 
 ## TODOs:
+- Handle files with no break lines
 - Recursive special filters like: birthday__year__lt
 - Filter with same line like: .filter(start_day=L("end_day"))
 - Multi-column order like: .order_by("-age", "name")
