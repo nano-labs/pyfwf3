@@ -53,15 +53,6 @@ So that file will easily become this:
 - Count a subset
 - Uniqueness of data on a column
 
-### TODOs
-- Recursive special filters like: birthday__year__lt
-- Filter with same line like: .filter(start_day=L("end_day"))
-- Multi-column order like: .order_by("-age", "name")
-- Values using special fields like: .values("name__len")
-- Order using special fields like: .order_by("birthday__year")
-- Export methods like: .sqlite file or .sql file
-- Write a fixed-width field file (?)(why would someone write those files?)
-
 
 # Usage
 
@@ -372,7 +363,7 @@ Return how many lines there are on that queryset
 
 ### .values(*fields)
 
-This method should be used to actually returns data from a queryset. Will return the specified fields only or all if none was specified.
+This method should be used to actually return data from a queryset. Will return the specified fields only or all of them if none is specified.
 
 Returns a __ValuesList__ instance which is in fact a extended __list__ object with overwriten __\_\_repr\_\___ method just to look like a table on shell, so on every other aspect it is a list. May be a list o tuples, if more the one column is returned, or a simple list if only one field was specified
 
@@ -459,7 +450,7 @@ There is also 2 hidden fields that may be used, if needed:
 | 3446         | Gilbert Garcia   | M      | 19400125 | US       | NC    | Whatever     | Student    |
 | 6378         | Helen Villarreal | F      | 19400125 | US       | MD    | Whatever     |            |
 +--------------+------------------+--------+----------+----------+-------+--------------+------------+
->>> # Note the breakline on _original_line
+>>> # Note the trailing whitespaces and breakline on _original_line
 >>> parsed.lines[:5].values("_line_number", "_original_line")
 +--------------+-----------------------------------------------------------------------------------+
 | _line_number | _original_line                                                                    |
@@ -475,4 +466,47 @@ There is also 2 hidden fields that may be used, if needed:
 | 5            | US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer  |
 |              |                                                                                   |
 +--------------+-----------------------------------------------------------------------------------+
+>>> parsed.lines[:5].values("_line_number", "_original_line")[:]
+[(1,
+  'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'),
+ (2,
+  'US       MI19940213M706a6e0afc3dRosalyn Clark           Whatever    Comedian     \n'),
+ (3,
+  'US       WI19510403M451ed630accbShirley Gray            Whatever    Comedian     \n'),
+ (4,
+  'US       MD20110508F7e5cd7324f38Georgia Frank           Whatever    Comedian     \n'),
+ (5,
+  'US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer \n')]
+
 ```
+TODO: Allow special fields to be used
+
+# Models
+
+## pyfwf3.BaseLineParser
+
+This is the class responsible for the actual parsing and have to be extended to set its parsing map, as explained on [Setting up your parser](#Setting up your parser). It also responsible for all the magic before and after parsing by the use of [_before_parse()](#_before_parse()) and [_after_parse()](#_after_parse()) methods
+
+### _before_parse()
+This method is called before the line is parsed. At this point __self__ have:
+- self._original_line: The line to be parsed
+- self._line_number: File line number
+- self._headers: Name of all soon-to-be-available fields
+- self._map: The field mapping for the parsing
+
+
+## pyfwf3.BaseFileParser
+
+This class will center all file data but its a very small class. May be used directly or extended to set its line parser
+
+
+
+### TODOs
+- Recursive special filters like: birthday__year__lt
+- Filter with same line like: .filter(start_day=L("end_day"))
+- Multi-column order like: .order_by("-age", "name")
+- Values using special fields like: .values("name__len")
+- Order using special fields like: .order_by("birthday__year")
+- Export methods like: .sqlite file or .sql file
+- Write a fixed-width field file (?)(why would someone write those files?)
+
