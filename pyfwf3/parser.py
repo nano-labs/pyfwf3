@@ -50,10 +50,10 @@ class BaseLineParser:
         self._after_parse()
 
     def _update_headers(self):
-        """Add any new attribute to headers."""
-        for attr in dir(self):
-            if not attr.startswith("_") and attr not in self._headers:
-                self._headers.append(attr)
+        """Add any new attributes to headers."""
+        new_headers = [attr for attr in dir(self) if not attr.startswith("_")]
+        self._headers = sorted(new_headers,
+                               key=(self._headers + sorted(new_headers)).index)
 
     def _before_parse(self):
         """Method called before any parse is done.
