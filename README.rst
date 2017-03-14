@@ -34,7 +34,7 @@ Table of Contents
       2. `BaseFileParser <#pyfwf3basefileparser>`__
 
          -  `.open() <#openfilename-line_parsernone>`__
-         -  `.lines <#lines-attribute>`__
+         -  `.objects <#objects-attribute>`__
 
 5. `TODOs <#todos>`__
 
@@ -189,14 +189,14 @@ We will discuss those classes in the `future <#pyfwf3baselineparser>`__
 Queryset
 --------
 
-With your parsed file as a BaseFileParser instance you have all lines
-stored as a Queryset instance in ".lines" attribute. So:
+With your parsed file as a BaseFileParser instance you have all objects
+stored as a Queryset instance in ".objects" attribute. So:
 
 .. code:: pycon
 
     >>> parsed = HumanFileParser.open("examples/humans.txt")
     >>> # slices returns a smaller queryset instance
-    >>> parsed.lines[0:5]
+    >>> parsed.objects[0:5]
     +------------------+----------+--------+
     | name             | birthday | gender |
     +------------------+----------+--------+
@@ -207,22 +207,22 @@ stored as a Queryset instance in ".lines" attribute. So:
     | Virginia Lambert | 19930404 | M      |
     +------------------+----------+--------+
     >>> # while getting a specific item returns a parsed line instance
-    >>> parsed.lines[327]
+    >>> parsed.objects[327]
     +------------+----------+--------+
     | name       | birthday | gender |
     +------------+----------+--------+
     | Jack Brown | 19490106 | M      |
     +------------+----------+--------+
     >>> # Note that the table is only a shell representation of the objects
-    >>> parsed.lines[327].name
+    >>> parsed.objects[327].name
     'Jack Brown'
-    >>> parsed.lines[327].birthday
+    >>> parsed.objects[327].birthday
     '19490106'
-    >>> parsed.lines[327].gender
+    >>> parsed.objects[327].gender
     'M'
-    >>> tuple(parsed.lines[327])
+    >>> tuple(parsed.objects[327])
     ('M', 'Jack Brown', '19490106')
-    >>> list(parsed.lines[327])
+    >>> list(parsed.objects[327])
     ['M', 'Jack Brown', '19490106']
     >>> # To prevent the fields from changing order use OrderedDict instead of dict on _map. More about that later
 
@@ -235,8 +235,8 @@ a new queryset that can be filtered too and so and so
 .. code:: pycon
 
     >>> parsed = HumanFileParser.open("examples/humans.txt")
-    >>> first5 = parsed.lines[:5]
-    >>> # 'first5' is a Queryset instance just as 'parsed.lines' but with only a few lines
+    >>> first5 = parsed.objects[:5]
+    >>> # 'first5' is a Queryset instance just as 'parsed.objects' but with only a few objects
     >>> firts5
     +------------------+----------+--------+
     | name             | birthday | gender |
@@ -293,7 +293,7 @@ Pretty much the opposite of `.filter() <#filterkwargs>`__
 .. code:: pycon
 
     >>> parsed = HumanFileParser.open("examples/humans.txt")
-    >>> first5 = parsed.lines[:5]
+    >>> first5 = parsed.objects[:5]
     >>> firts5
     +------------------+----------+--------+
     | name             | birthday | gender |
@@ -321,7 +321,7 @@ Reorder the whole queryset sorting by that given field
 .. code:: pycon
 
     >>> parsed = HumanFileParser.open("examples/humans.txt")
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+----------+--------+
     | name             | birthday | gender |
     +------------------+----------+--------+
@@ -331,7 +331,7 @@ Reorder the whole queryset sorting by that given field
     | Georgia Frank    | 20110508 | F      |
     | Virginia Lambert | 19930404 | M      |
     +------------------+----------+--------+
-    >>> parsed.lines[:5].order_by("name")
+    >>> parsed.objects[:5].order_by("name")
     +------------------+--------+----------+
     | name             | gender | birthday |
     +------------------+--------+----------+
@@ -341,7 +341,7 @@ Reorder the whole queryset sorting by that given field
     | Shirley Gray     | M      | 19510403 |
     | Virginia Lambert | M      | 19930404 |
     +------------------+--------+----------+
-    >>> parsed.lines[:5].order_by("name", reverse=True)
+    >>> parsed.objects[:5].order_by("name", reverse=True)
     +------------------+--------+----------+
     | name             | gender | birthday |
     +------------------+--------+----------+
@@ -390,7 +390,7 @@ use complete line parser for that humans.txt file
 .. code:: pycon
 
     >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -400,12 +400,12 @@ use complete line parser for that humans.txt file
     | Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
     | Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
     +------------------+--------+----------+----------+-------+----------+--------------+
-    >>> # Looking into all lines
-    >>> parsed.lines.unique("gender")
+    >>> # Looking into all objects
+    >>> parsed.objects.unique("gender")
     ['F', 'M']
-    >>> parsed.lines.unique("profession")
+    >>> parsed.objects.unique("profession")
     ['', 'Time traveler', 'Student', 'Berserk', 'Hero', 'Soldier', 'Super hero', 'Shark tammer', 'Artist', 'Hunter', 'Cookie maker', 'Comedian', 'Mecromancer', 'Programmer', 'Medic', 'Siren']
-    >>> parsed.lines.unique("state")
+    >>> parsed.objects.unique("state")
     ['', 'MT', 'WA', 'NY', 'AZ', 'MD', 'LA', 'IN', 'IL', 'WY', 'OK', 'NJ', 'VT', 'OH', 'AR', 'FL', 'DE', 'KS', 'NC', 'NM', 'MA', 'NH', 'ME', 'CT', 'MS', 'RI', 'ID', 'HI', 'NE', 'TN', 'AL', 'MN', 'TX', 'WV', 'KY', 'CA', 'NV', 'AK', 'IA', 'PA', 'UT', 'SD', 'CO', 'MI', 'VA', 'GA', 'ND', 'OR', 'SC', 'WI', 'MO']
 
 TODO: Unique by special field
@@ -413,22 +413,22 @@ TODO: Unique by special field
 .count()
 ~~~~~~~~
 
-Return how many lines are there on that queryset
+Return how many objects are there on that queryset
 
 .. code:: pycon
 
     >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
     >>> # Total
-    >>> parsed.lines.count()
+    >>> parsed.objects.count()
     10012
     >>> # How many are women
-    >>> parsed.lines.filter(gender="F").count()
+    >>> parsed.objects.filter(gender="F").count()
     4979
     >>> # How many womans from New York or California
-    >>> parsed.lines.filter(gender="F", state__in=["NY", "CA"]).count()
+    >>> parsed.objects.filter(gender="F", state__in=["NY", "CA"]).count()
     197
     >>> # How many mens born on 1960 or later
-    >>> parsed.lines.filter(gender="M").exclude(birthday__lt="19600101").count()
+    >>> parsed.objects.filter(gender="M").exclude(birthday__lt="19600101").count()
     4321
 
 .values(\*fields)
@@ -446,7 +446,7 @@ was specified
 .. code:: pycon
 
     >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
-    >>> parsed.lines[:5].values("name")
+    >>> parsed.objects[:5].values("name")
     +------------------+
     | name             |
     +------------------+
@@ -457,13 +457,13 @@ was specified
     | Virginia Lambert |
     +------------------+
     >>> # even though it looks like a table it is actually a list
-    >>> parsed.lines[:5].values("name")[:]
+    >>> parsed.objects[:5].values("name")[:]
     ['Dianne Mcintosh',
      'Rosalyn Clark',
      'Shirley Gray',
      'Georgia Frank',
      'Virginia Lambert']
-    >>> parsed.lines[:5].values("name", "state")
+    >>> parsed.objects[:5].values("name", "state")
     +------------------+-------+
     | name             | state |
     +------------------+-------+
@@ -474,14 +474,14 @@ was specified
     | Virginia Lambert | PA    |
     +------------------+-------+
     >>> # or a list o tuples
-    >>> parsed.lines[:5].values("name", "state")[:]
+    >>> parsed.objects[:5].values("name", "state")[:]
     [('Dianne Mcintosh', 'AR'),
      ('Rosalyn Clark', 'MI'),
      ('Shirley Gray', 'WI'),
      ('Georgia Frank', 'MD'),
      ('Virginia Lambert', 'PA')]
     >>> # If no field is specified it will return all
-    >>> parsed.lines[:5].values()
+    >>> parsed.objects[:5].values()
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -491,7 +491,7 @@ was specified
     | Georgia Frank    | F      | 20110508 | US       | MD    | Whatever | Comedian     |
     | Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
     +------------------+--------+----------+----------+-------+----------+--------------+
-    >>> parsed.lines[:5].values()[:]
+    >>> parsed.objects[:5].values()[:]
     [('Dianne Mcintosh', 'F', '19570526', 'US', 'AR', 'Whatever', 'Medic'),
      ('Rosalyn Clark', 'M', '19940213', 'US', 'MI', 'Whatever', 'Comedian'),
      ('Shirley Gray', 'M', '19510403', 'US', 'WI', 'Whatever', 'Comedian'),
@@ -507,7 +507,7 @@ and unparsed original line, with original line breakers at the end
 .. code:: pycon
 
     >>> parsed = CompleteHumanFileParser.open("examples/humans.txt")
-    >>> parsed.lines.order_by("birthday")[:5].values("_line_number", "name")
+    >>> parsed.objects.order_by("birthday")[:5].values("_line_number", "name")
     +--------------+------------------+
     | _line_number | name             |
     +--------------+------------------+
@@ -518,7 +518,7 @@ and unparsed original line, with original line breakers at the end
     | 6378         | Helen Villarreal |
     +--------------+------------------+
     >>> # or a little hacking to add it
-    >>> parsed.lines.order_by("birthday")[:5].values("_line_number", *parsed._line_parser._map.keys())
+    >>> parsed.objects.order_by("birthday")[:5].values("_line_number", *parsed._line_parser._map.keys())
     +--------------+------------------+--------+----------+----------+-------+--------------+------------+
     | _line_number | name             | gender | birthday | location | state | universe     | profession |
     +--------------+------------------+--------+----------+----------+-------+--------------+------------+
@@ -529,7 +529,7 @@ and unparsed original line, with original line breakers at the end
     | 6378         | Helen Villarreal | F      | 19400125 | US       | MD    | Whatever     |            |
     +--------------+------------------+--------+----------+----------+-------+--------------+------------+
     >>> # Note the trailing whitespaces and breakline on _unparsed_line
-    >>> parsed.lines[:5].values("_line_number", "_unparsed_line")
+    >>> parsed.objects[:5].values("_line_number", "_unparsed_line")
     +--------------+-----------------------------------------------------------------------------------+
     | _line_number | _unparsed_line                                                                    |
     +--------------+-----------------------------------------------------------------------------------+
@@ -544,7 +544,7 @@ and unparsed original line, with original line breakers at the end
     | 5            | US       PA19930404Mecc7f17c16a6Virginia Lambert        Whatever    Shark tammer  |
     |              |                                                                                   |
     +--------------+-----------------------------------------------------------------------------------+
-    >>> parsed.lines[:5].values("_line_number", "_unparsed_line")[:]
+    >>> parsed.objects[:5].values("_line_number", "_unparsed_line")[:]
     [(1, 'US       AR19570526Fbe56008be36eDianne Mcintosh         Whatever    Medic        \n'),
      (2, 'US       MI19940213M706a6e0afc3dRosalyn Clark           Whatever    Comedian     \n'),
      (3, 'US       WI19510403M451ed630accbShirley Gray            Whatever    Comedian     \n'),
@@ -619,7 +619,7 @@ Then use it as you like
 .. code:: pycon
 
     >>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -631,12 +631,12 @@ Then use it as you like
     +------------------+--------+----------+----------+-------+----------+--------------+
     >>> # Note that everything is uppercased
     >>> # And there is nobody who is not from US
-    >>> parsed.lines.exclude(location="US").count()
+    >>> parsed.objects.exclude(location="US").count()
     0
-    >>> parsed.lines.unique("location")
+    >>> parsed.objects.unique("location")
     ['US']
 
-\_after\_parse() This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some lines.
+\_after\_parse() This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some objects.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ex:
@@ -700,7 +700,7 @@ Then just use as you like
 .. code:: pycon
 
     >>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+------------+----------+--------------+---------+-----+
     | name             | gender | birthday   | universe | profession   | address | age |
     +------------------+--------+------------+----------+--------------+---------+-----+
@@ -711,10 +711,10 @@ Then just use as you like
     | Virginia Lambert | M      | 1993-04-04 | Whatever | Shark tammer | US, PA  | 24  |
     +------------------+--------+------------+----------+--------------+---------+-----+
     >>> # Note that birthday is now a datetime.date instance
-    >>> parsed.lines[0].birthday
+    >>> parsed.objects[0].birthday
     datetime.date(1957, 5, 26)
     >>> # and you can use datetime attributes as special filters
-    >>> parsed.lines.filter(birthday__day=4, birthday__month=7)[:5]
+    >>> parsed.objects.filter(birthday__day=4, birthday__month=7)[:5]
     +--------------------+--------+------------+----------+------------+---------+-----+
     | name               | gender | birthday   | universe | profession | address | age |
     +--------------------+--------+------------+----------+------------+---------+-----+
@@ -724,7 +724,7 @@ Then just use as you like
     | Harry Carson       | M      | 1989-07-04 | Whatever | Student    | US, AK  | 28  |
     | Margaret Walks     | M      | 2012-07-04 | Whatever | Comedian   | US, AZ  | 5   |
     +--------------------+--------+------------+----------+------------+---------+-----+
-    >>> parsed.lines.filter(birthday__gte=datetime(2000, 1, 1).date()).order_by("birthday")[:5]
+    >>> parsed.objects.filter(birthday__gte=datetime(2000, 1, 1).date()).order_by("birthday")[:5]
     +---------------+--------+------------+----------+--------------+---------+-----+
     | name          | gender | birthday   | universe | profession   | address | age |
     +---------------+--------+------------+----------+--------------+---------+-----+
@@ -735,7 +735,7 @@ Then just use as you like
     | Leigh Harley  | M      | 2000-01-06 | Whatever | Programmer   | US, NM  | 17  |
     +---------------+--------+------------+----------+--------------+---------+-----+
     >>> # And age is also usable
-    >>> parsed.lines.filter(age=18)[:5]
+    >>> parsed.objects.filter(age=18)[:5]
     +------------------+--------+------------+----------+--------------+---------+-----+
     | name             | gender | birthday   | universe | profession   | address | age |
     +------------------+--------+------------+----------+--------------+---------+-----+
@@ -745,7 +745,7 @@ Then just use as you like
     | Edith Briggs     | F      | 1999-04-05 | Whatever | Medic        | US, AL  | 18  |
     | Patrick Mckinley | F      | 1999-03-18 | Whatever | Comedian     | US, ME  | 18  |
     +------------------+--------+------------+----------+--------------+---------+-----+
-    >>> parsed.lines.filter(age__lt=18).order_by("age", reverse=True)[:5]
+    >>> parsed.objects.filter(age__lt=18).order_by("age", reverse=True)[:5]
     +--------------------+--------+------------+----------+--------------+---------+-----+
     | name               | gender | birthday   | universe | profession   | address | age |
     +--------------------+--------+------------+----------+--------------+---------+-----+
@@ -769,7 +769,7 @@ already have your CustomLineParser class so:
     >>> from pyfwf3 import BaseFileParser
     >>> # Let's say that you already created your CustomLineParser class
     >>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -798,7 +798,7 @@ Now you just
 .. code:: pycon
 
     >>> parsed = HumanParser.open("examples/humans.txt")
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -834,7 +834,7 @@ any IO instance that you have. For that just create an instance directly
     >>> parsed = BaseFileParser(f, CustomLineParser)
     >>> # Always remember to close your files or use "with" statement to do so
     >>> f.close()
-    >>> parsed.lines[:5]
+    >>> parsed.objects[:5]
     +------------------+--------+----------+----------+-------+----------+--------------+
     | name             | gender | birthday | location | state | universe | profession   |
     +------------------+--------+----------+----------+-------+----------+--------------+
@@ -845,10 +845,10 @@ any IO instance that you have. For that just create an instance directly
     | Virginia Lambert | M      | 19930404 | US       | PA    | Whatever | Shark tammer |
     +------------------+--------+----------+----------+-------+----------+--------------+
 
-**.lines** attribute
+**.objects** attribute
 ~~~~~~~~~~~~~~~~~~~~
 
-Your parsed file have a **.lines** attribute. Thats your complete parsed
+Your parsed file have a **.objects** attribute. Thats your complete parsed
 `queryset <#queryset>`__
 
 TODOs:

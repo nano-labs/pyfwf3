@@ -165,7 +165,7 @@ class BaseFileParser:
             return validators
 
         def filter(self, **kwargs):
-            """Filter lines based on fields.
+            """Filter objects based on fields.
 
             Special filter may be used with __ notation.
                 Some special filters are but not limited to:
@@ -212,7 +212,7 @@ class BaseFileParser:
             )
 
         def exclude(self, **kwargs):
-            """Filter lines that DO NOT match the kwargs."""
+            """Filter objects that DO NOT match the kwargs."""
             validators = self._filter_validators(kwargs)
             return self.new(
                 [
@@ -227,7 +227,7 @@ class BaseFileParser:
             )
 
         def order_by(self, field, reverse=False):
-            """Order lines by fields."""
+            """Order objects by fields."""
             return self.new(
                 sorted(self.lines, key=lambda x: x.__getattribute__(field),
                        reverse=reverse))
@@ -272,7 +272,7 @@ class BaseFileParser:
                     lines.append(self._line_parser(l, line_number))
                 except InvalidLineError:
                     pass
-        self.lines = self.QuerySet(lines, self)
+        self.objects = self.QuerySet(lines, self)
 
     @classmethod
     def open(cls, filename, line_parser=None):
@@ -284,4 +284,4 @@ class BaseFileParser:
 
     def all(self):
         """Return a queryset with all lines."""
-        return self.lines
+        return self.objects
