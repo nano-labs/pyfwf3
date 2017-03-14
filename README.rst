@@ -11,8 +11,9 @@ Table of Contents
 
 1. `When Should I NOT Use This? <#when-should-i-not-use-this>`__
 2. `Why Should I Use This? <#why-should-i-use-this?>`__
-3. `Features <features>`__
-4. `Usage <#usage>`__
+3. `Features <#features>`__
+4. `Instalation <#instalation>`__
+5. `Usage <#usage>`__
 
    1. `Setting up your parser <#setting-up-your-parser>`__
    2. `Queryset <#queryset>`__
@@ -36,7 +37,7 @@ Table of Contents
          -  `.open() <#openfilename-line_parsernone>`__
          -  `.objects <#objects-attribute>`__
 
-5. `TODOs <#todos>`__
+6. `TODOs <#todos>`__
 
 When should I use this?
 -----------------------
@@ -97,6 +98,16 @@ Features
 -  Add or remove columns
 -  Count a subset
 -  Uniqueness of data on a column
+
+Instalation
+===========
+
+Just use pip
+
+::
+
+    pip install fwf
+
 
 Usage
 =====
