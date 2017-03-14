@@ -23,14 +23,14 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.1.5',
+    version='0.1.0',
 
     description='Fixed-Width-Field File Format parser and tools',
     long_description=long_description,
 
     # The project's main homepage.
     url='https://github.com/nano-labs/pyfwf3',
-    download_url='https://github.com/nano-labs/pyfwf3/archive/0.1.5.tar.gz',
+    download_url='https://github.com/nano-labs/pyfwf3/archive/0.1.0.tar.gz',
 
     # Author details
     author='Fabio Pachelli Pacheco',
