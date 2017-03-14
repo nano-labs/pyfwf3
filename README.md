@@ -3,6 +3,28 @@
 Lib to help you handle those files that joins all data relying only on the lenght of each field.
 I made this for myself because I was having some bad times to filter and debug data from some huge stock market files with hundreds of thousands of lines.
 
+## Table of Contents
+1. [When Should I NOT Use This?](#when-should-i-not-use-this)
+2. [Why Should I Use This?](#why-should-i-use-this?)
+3. [Features](features)
+4. [Usage](#usage)
+  1. [Setting up your parser](#setting-up-your-parser)
+  2. [Queryset](#queryset)
+    1. [.filter()](#filterkwargs)
+    2. [.exclude()](#excludekwargs)
+    3. [.order_by()](#order_byfield_name-reversefalse)
+    4. [.unique()](#uniquefield_name)
+    5. [.count()](#count)
+    6. [.values()](#valuesfields)
+  3. [Models](#models)
+    1. [BaseLineParser](#pyfwf3baselineparser)
+      1. [_before_parse()](#_before_parse)
+      2. [_after_parse()](#_after_parse)
+    2. [BaseFileParser](#pyfwf3basefileparser)
+      1. [.open()](#openfilename-line_parsernone)
+      2. [.lines](#lines-attribute)
+6. [TODOs](#todos)
+
 
 ### When should I use this?
 
