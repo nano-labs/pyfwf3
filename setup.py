@@ -30,6 +30,7 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/nano-labs/pyfwf3',
+    download_url='https://github.com/nano-labs/pyfwf3/archive/0.1.1.tar.gz',
 
     # Author details
     author='Fabio Pachelli Pacheco',
