@@ -39,7 +39,7 @@ Table of Contents
 5. `TODOs <#todos>`__
 
 When should I use this?
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 When you have files like this:
 
@@ -61,7 +61,7 @@ where each line represents one dataset and the data is concatenated on
 that line.
 
 Why should I use this?
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Even though parsing this kind of file is pretty easy you may want to
 filter some of its data. Also this lib helps you to visualize you data
@@ -86,7 +86,7 @@ become this:
     +------------------+--------+------------+----------+-------+----------+---------------+-----+
 
 Features
-~~~~~~~~
+--------
 
 -  Parse and objectify your file
 -  Filter objects using a django-like syntax
@@ -227,7 +227,7 @@ stored as a Queryset instance in ".objects" attribute. So:
     >>> # To prevent the fields from changing order use OrderedDict instead of dict on _map. More about that later
 
 .filter(\*\*kwargs)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Here is where the magic happens. A filtered queryset will always return
 a new queryset that can be filtered too and so and so
@@ -272,11 +272,17 @@ a new queryset that can be filtered too and so and so
     +------------------+----------+--------+
 
 Some special filters may be used with \_\_ notation. Here are some but
-not limited to: - \_\_in: value is in a list - \_\_lt: less than -
-\_\_lte: less than or equals - \_\_gt: greater than - \_\_gte: greater
-than or equals - \_\_ne: not equals - \_\_len: field lenght (without
-trailing spaces) - \_\_startswith: value starts with that string -
-\_\_endswith: value ends with that string
+not limited to:
+
+- \_\_in: value is in a list
+- \_\_lt: less than
+- \_\_lte: less than or equals
+- \_\_gt: greater than
+- \_\_gte: greater than or equals
+- \_\_ne: not equals
+- \_\_len: field lenght (without trailing spaces)
+- \_\_startswith: value starts with that string
+- \_\_endswith: value ends with that string
 
 It will actually look for any attribute or method of the field object
 that matches with **'object.somefilter'** or
@@ -286,7 +292,7 @@ convert the **'birthday'** field into **datetime.date** instances you
 can now filter using, for example, **.filter(birthday\_\_year=1957)**
 
 .exclude(\*\*kwargs)
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Pretty much the opposite of `.filter() <#filterkwargs>`__
 
@@ -314,7 +320,7 @@ Pretty much the opposite of `.filter() <#filterkwargs>`__
     +------------------+----------+--------+
 
 .order\_by(field\_name, reverse=False)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------
 
 Reorder the whole queryset sorting by that given field
 
@@ -355,7 +361,7 @@ Reorder the whole queryset sorting by that given field
 TODO: Order by more than one field and order by special field
 
 .unique(field\_name)
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 Return a list o unique values for that field. For this example I will
 use complete line parser for that humans.txt file
@@ -411,7 +417,7 @@ use complete line parser for that humans.txt file
 TODO: Unique by special field
 
 .count()
-~~~~~~~~
+--------
 
 Return how many objects are there on that queryset
 
@@ -432,7 +438,7 @@ Return how many objects are there on that queryset
     4321
 
 .values(\*fields)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 This method should be used to actually return data from a queryset. Will
 return the specified fields only or all of them if none is specified.
@@ -499,10 +505,10 @@ was specified
      ('Virginia Lambert', 'M', '19930404', 'US', 'PA', 'Whatever', 'Shark tammer')]
     >>> # Note that you dont need to slice the result with '[:]'. I am only doing it to show the response structure behind the table representation
 
-There is also 2 hidden fields that may be used, if needed: -
-\_line\_number: The line number on the original file, counting even if
-some line is skipped during parsing - \_unparsed\_line: The unchanged
-and unparsed original line, with original line breakers at the end
+There is also 2 hidden fields that may be used, if needed:
+
+- \_line\_number: The line number on the original file, counting even if some line is skipped during parsing
+- \_unparsed\_line: The unchanged and unparsed original line, with original line breakers at the end
 
 .. code:: pycon
 
@@ -566,8 +572,16 @@ magic before and after parsing by the use of
 `\_before\_parse() <#_before_parse>`__ and
 `\_after\_parse() <#_after_parse>`__ methods
 
-\_before\_parse() This method is called before the line is parsed. At this point **self** have: - self.\_unparsed\_line: Original unchanged line - self.\_parsable\_line: Line to be parsed. If None given self.\_unparsed\_line wil be used - self.\_line\_number: File line number - self.\_headers: Name of all soon-to-be-available fields - self.\_map: The field mapping for the parsing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\_before\_parse()
+-----------------
+
+This method is called before the line is parsed. At this point **self** have:
+
+- self.\_unparsed\_line: Original unchanged line
+- self.\_parsable\_line: Line to be parsed. If None given self.\_unparsed\_line wil be used
+- self.\_line\_number: File line number
+- self.\_headers: Name of all soon-to-be-available fields
+- self.\_map: The field mapping for the parsing
 
 Use it to pre-filter, pre-validade or process the line before parsing.
 
@@ -636,8 +650,10 @@ Then use it as you like
     >>> parsed.objects.unique("location")
     ['US']
 
-\_after\_parse() This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some objects.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\_after\_parse()
+----------------
+
+This method is called after the line is parsed. At this point you have a already parsed line and now you may create new fields, alter some existing or combine those. You still may filter some objects.
 
 Ex:
 
@@ -810,7 +826,7 @@ Now you just
     +------------------+--------+----------+----------+-------+----------+--------------+
 
 .open(filename, line\_parser=None)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 This class method actually open the given file, parse it, close it and
 return a parsed file instance. Pretty much every example here is using
@@ -846,7 +862,7 @@ any IO instance that you have. For that just create an instance directly
     +------------------+--------+----------+----------+-------+----------+--------------+
 
 **.objects** attribute
-~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 Your parsed file have a **.objects** attribute. Thats your complete parsed
 `queryset <#queryset>`__
