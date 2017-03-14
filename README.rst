@@ -1,4 +1,4 @@
-pyfwf3 - Fixed-Width-Field File Format parser and tools
+FWF - Fixed-Width-Field File Format parser and tools
 =======================================================
 
 Lib to help you handle those files that joins all data relying only on
@@ -26,12 +26,12 @@ Table of Contents
 
    3. `Models <#models>`__
 
-      1. `BaseLineParser <#pyfwf3baselineparser>`__
+      1. `BaseLineParser <#fwfbaselineparser>`__
 
          -  `\_before\_parse() <#_before_parse>`__
          -  `\_after\_parse() <#_after_parse>`__
 
-      2. `BaseFileParser <#pyfwf3basefileparser>`__
+      2. `BaseFileParser <#fwfbasefileparser>`__
 
          -  `.open() <#openfilename-line_parsernone>`__
          -  `.objects <#objects-attribute>`__
@@ -125,7 +125,7 @@ model
 
 .. code:: python
 
-    from pyfwf3 import BaseLineParser
+    from fwf import BaseLineParser
 
 
     class Human(BaseLineParser):
@@ -149,7 +149,7 @@ That's it. Your file is parsed and now usable but let's put it together:
 
 .. code:: python
 
-    from pyfwf3 import BaseLineParser, BaseFileParser
+    from fwf import BaseLineParser, BaseFileParser
 
 
     class Human(BaseLineParser):
@@ -166,7 +166,7 @@ or even
 
 .. code:: python
 
-    from pyfwf3 import BaseLineParser, BaseFileParser
+    from fwf import BaseLineParser, BaseFileParser
 
 
     class Human(BaseLineParser):
@@ -184,7 +184,7 @@ or even
 
     parsed = HumanFileParser.open("examples/humans.txt")
 
-We will discuss those classes in the `future <#pyfwf3baselineparser>`__
+We will discuss those classes in the `future <#fwfbaselineparser>`__
 
 Queryset
 --------
@@ -363,7 +363,7 @@ use complete line parser for that humans.txt file
 .. code:: python
 
     from collections import OrderedDict
-    from pyfwf3 import BaseLineParser, BaseFileParser
+    from fwf import BaseLineParser, BaseFileParser
 
 
     class CompleteHuman(BaseLineParser):
@@ -556,7 +556,7 @@ TODO: Allow special fields to be used
 Models
 ======
 
-pyfwf3.BaseLineParser
+fwf.BaseLineParser
 ---------------------
 
 This is the class responsible for the actual parsing and have to be
@@ -576,7 +576,7 @@ Ex:
 .. code:: python
 
     from collections import OrderedDict
-    from pyfwf3 import BaseLineParser, InvalidLineError
+    from fwf import BaseLineParser, InvalidLineError
 
 
     class CustomLineParser(BaseLineParser):
@@ -645,7 +645,7 @@ Ex:
 
     from datetime import datetime
     from collections import OrderedDict
-    from pyfwf3 import BaseLineParser, InvalidLineError
+    from fwf import BaseLineParser, InvalidLineError
 
 
     class CustomLineParser(BaseLineParser):
@@ -756,17 +756,17 @@ Then just use as you like
     | Tamara Kidd        | M      | 2000-01-03 | Whatever | Artist       | US, MN  | 17  |
     +--------------------+--------+------------+----------+--------------+---------+-----+
 
-pyfwf3.BaseFileParser
+fwf.BaseFileParser
 ---------------------
 
 This class will center all file data and needs a line parser to do the
 actual parsing. So you will need a class extended from
-`BaseLineParser <#pyfwf3baselineparser>`__. I'll consider that you
+`BaseLineParser <#fwfbaselineparser>`__. I'll consider that you
 already have your CustomLineParser class so:
 
 .. code:: pycon
 
-    >>> from pyfwf3 import BaseFileParser
+    >>> from fwf import BaseFileParser
     >>> # Let's say that you already created your CustomLineParser class
     >>> parsed = BaseFileParser.open("examples/humans.txt", CustomLineParser)
     >>> parsed.objects[:5]
@@ -784,7 +784,7 @@ Or you may extend BaseFileParser for semantics sake
 
 .. code:: python
 
-    from pyfwf3 import BaseFileParser
+    from fwf import BaseFileParser
 
 
     class HumanParser(BaseFileParser):
@@ -828,7 +828,7 @@ any IO instance that you have. For that just create an instance directly
 
 .. code:: pycon
 
-    >>> from pyfwf3 import BaseFileParser
+    >>> from fwf import BaseFileParser
     >>> # Let's say that you already created your CustomLineParser class
     >>> f = open("examples/humans.txt", "r")
     >>> parsed = BaseFileParser(f, CustomLineParser)

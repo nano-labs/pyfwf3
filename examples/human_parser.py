@@ -3,8 +3,7 @@
 """Parser humans."""
 
 from datetime import datetime
-from pyfwf3 import (BaseLineParser, BaseFileParser, OrderedDict,
-                    InvalidLineError)
+from fwf import BaseLineParser, BaseFileParser, OrderedDict, InvalidLineError
 
 
 class HumanLineParser(BaseLineParser):
