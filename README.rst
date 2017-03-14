@@ -108,7 +108,7 @@ First thing you need to know is the width of each column on your file.
 There's no magic here. You will need to find out.
 
 Lets take `this
-file <https://github.com/nano-labs/pyfwf3/blob/master/examples/humans.txt>`__
+file <https://raw.githubusercontent.com/nano-labs/pyfwf3/master/examples/humans.txt>`__
 as example. Here its first line:
 
 ::
@@ -143,7 +143,7 @@ going to use it with the file parser.
 
     from pytwt3 import BaseFileParser
 
-    parsed = BaseFileParser.open("examples/humnas.txt", line_parser=Human)
+    parsed = BaseFileParser.open("examples/humans.txt", line_parser=Human)
 
 That's it. Your file is parsed and now usable but let's put it together:
 
@@ -160,7 +160,7 @@ That's it. Your file is parsed and now usable but let's put it together:
                 "birthday": slice(11, 19)}
 
 
-    parsed = BaseFileParser.open("examples/humnas.txt", line_parser=Human)
+    parsed = BaseFileParser.open("examples/humans.txt", line_parser=Human)
 
 or even
 
